@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useGame } from '@/context/GameContext'
+import { useRouter } from '@/i18n/routing'
 import { ShareLink } from './ShareLink'
 
 export function LobbyView() {
   const t = useTranslations('lobby')
   const { state, dispatch } = useGame()
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const isHost = state.mySessionId === state.hostSessionId
@@ -57,6 +59,20 @@ export function LobbyView() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleLeave = async () => {
+    setLoading(true)
+    try {
+      await fetch(`/api/rooms/${state.roomCode}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: state.mySessionId }),
+      })
+      router.push('/')
+    } catch {
+      router.push('/')
     }
   }
 
@@ -117,6 +133,14 @@ export function LobbyView() {
           {t('waitingForPlayers')}
         </p>
       )}
+
+      <button
+        onClick={handleLeave}
+        disabled={loading}
+        className="w-full py-3 text-gray-400 rounded-xl font-medium active:text-white transition-colors disabled:opacity-50"
+      >
+        {t('leave')}
+      </button>
     </div>
   )
 }

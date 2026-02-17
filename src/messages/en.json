@@ -21,7 +21,8 @@
     "startGame": "Start Game",
     "needMorePlayers": "Need at least 2 players",
     "host": "Host",
-    "bot": "Bot"
+    "bot": "Bot",
+    "leave": "Leave"
   },
   "game": {
     "round": "Round",

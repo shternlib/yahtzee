@@ -15,6 +15,7 @@ export type ErrorCode =
   | 'GAME_NOT_IN_PROGRESS'
   | 'NOT_IN_GAME'
   | 'NO_CATEGORIES'
+  | 'MISSING_SESSION'
   | 'INTERNAL_ERROR'
 
 export function errorResponse(code: ErrorCode, message: string, status: number) {
