@@ -1,0 +1,75 @@
+{
+  "home": {
+    "title": "Yahtzee",
+    "subtitle": "Multiplayer Dice Game",
+    "namePlaceholder": "Your name",
+    "createGame": "Create Game",
+    "joinByCode": "Join by Code",
+    "codePlaceholder": "Room code",
+    "join": "Join",
+    "playWithBots": "Play with Bots"
+  },
+  "lobby": {
+    "title": "Game Lobby",
+    "roomCode": "Room Code",
+    "copyLink": "Copy Invite Link",
+    "linkCopied": "Link copied!",
+    "players": "Players",
+    "of": "of",
+    "waitingForPlayers": "Waiting for players...",
+    "addBot": "Add Bot",
+    "startGame": "Start Game",
+    "needMorePlayers": "Need at least 2 players",
+    "host": "Host",
+    "bot": "Bot"
+  },
+  "game": {
+    "round": "Round",
+    "of13": "of 13",
+    "yourTurn": "Your turn!",
+    "waitingFor": "Waiting for {name}...",
+    "roll": "Roll",
+    "rollsLeft": "{count} rolls left",
+    "selectCategory": "Select a category",
+    "held": "Held"
+  },
+  "scorecard": {
+    "title": "Scorecard",
+    "upperSection": "Upper Section",
+    "lowerSection": "Lower Section",
+    "ones": "Ones",
+    "twos": "Twos",
+    "threes": "Threes",
+    "fours": "Fours",
+    "fives": "Fives",
+    "sixes": "Sixes",
+    "upperBonus": "Bonus (63+)",
+    "upperTotal": "Upper Total",
+    "threeOfAKind": "Three of a Kind",
+    "fourOfAKind": "Four of a Kind",
+    "fullHouse": "Full House",
+    "smallStraight": "Small Straight",
+    "largeStraight": "Large Straight",
+    "yahtzee": "Yahtzee",
+    "chance": "Chance",
+    "lowerTotal": "Lower Total",
+    "grandTotal": "Grand Total"
+  },
+  "results": {
+    "title": "Game Over!",
+    "winner": "{name} wins!",
+    "finalScores": "Final Scores",
+    "playAgain": "Play Again",
+    "backToHome": "Back to Home"
+  },
+  "errors": {
+    "roomNotFound": "Room not found",
+    "roomFull": "Room is full",
+    "gameStarted": "Game has already started",
+    "connectionLost": "Connection lost. Reconnecting..."
+  },
+  "language": {
+    "en": "English",
+    "ru": "Russian"
+  }
+}

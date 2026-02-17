@@ -1,0 +1,200 @@
+'use client'
+
+import { useEffect, useState, use } from 'react'
+import { useTranslations } from 'next-intl'
+import { useGame } from '@/context/GameContext'
+import { useGameChannel } from '@/hooks/useGameChannel'
+import { usePresence } from '@/hooks/usePresence'
+import { LobbyView } from '@/components/lobby/LobbyView'
+import { GameBoard } from '@/components/game/GameBoard'
+import { ResultsView } from '@/components/results/ResultsView'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
+import { getStoredSessionId, getStoredPlayerName, storeSessionId } from '@/lib/utils/session'
+
+export default function GamePage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = use(params)
+  const { state, dispatch } = useGame()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [joining, setJoining] = useState(false)
+  const t = useTranslations('errors')
+
+  const roomCode = code.toUpperCase()
+
+  // Connect to realtime channel
+  useGameChannel(state.roomCode || null)
+  usePresence(state.roomCode || null, state.mySessionId)
+
+  // Load room state on mount
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRoom() {
+      try {
+        const res = await fetch(`/api/rooms/${roomCode}`)
+        const data = await res.json()
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          setError(data.error?.message || t('roomNotFound'))
+          setLoading(false)
+          return
+        }
+
+        const sessionId = getStoredSessionId()
+        const existingPlayer = data.players.find(
+          (p: { sessionId: string }) => p.sessionId === sessionId
+        )
+
+        dispatch({
+          type: 'SET_ROOM',
+          payload: {
+            roomCode: data.roomCode,
+            roomId: data.roomId,
+            hostSessionId: data.hostSessionId,
+            players: data.players,
+            status: data.status,
+          },
+        })
+
+        if (existingPlayer) {
+          dispatch({
+            type: 'SET_MY_SESSION',
+            payload: {
+              sessionId: sessionId!,
+              playerIndex: existingPlayer.playerIndex,
+            },
+          })
+          setLoading(false)
+        } else if (data.status === 'lobby') {
+          // Need to join
+          setJoining(true)
+          setLoading(false)
+        } else {
+          setError(t('gameStarted'))
+          setLoading(false)
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Network error')
+          setLoading(false)
+        }
+      }
+    }
+
+    loadRoom()
+    return () => { cancelled = true }
+  }, [roomCode, dispatch, t])
+
+  // Join handler
+  const handleJoin = async (name: string) => {
+    setJoining(false)
+    setLoading(true)
+
+    try {
+      const res = await fetch(`/api/rooms/${roomCode}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerName: name,
+          sessionId: getStoredSessionId(),
+        }),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        storeSessionId(data.sessionId)
+        dispatch({
+          type: 'SET_MY_SESSION',
+          payload: {
+            sessionId: data.sessionId,
+            playerIndex: data.playerIndex,
+          },
+        })
+        // Update players list
+        dispatch({
+          type: 'SET_ROOM',
+          payload: {
+            roomCode,
+            roomId: data.roomId,
+            hostSessionId: state.hostSessionId || '',
+            players: data.players.map((p: { displayName: string; playerIndex: number; isBot: boolean }) => ({
+              id: '',
+              displayName: p.displayName,
+              playerIndex: p.playerIndex,
+              isBot: p.isBot,
+              isConnected: true,
+            })),
+            status: 'lobby',
+          },
+        })
+      } else {
+        setError(data.error?.message || 'Failed to join')
+      }
+    } catch {
+      setError('Network error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-dvh">
+        <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 min-h-dvh px-6">
+        <p className="text-red-400 text-lg">{error}</p>
+        <a href="/" className="text-blue-400 underline">Back to Home</a>
+      </div>
+    )
+  }
+
+  if (joining) {
+    return <JoinForm onJoin={handleJoin} />
+  }
+
+  return (
+    <div className="relative">
+      <div className="absolute top-3 right-3 z-10">
+        <LanguageToggle />
+      </div>
+      {state.status === 'lobby' && <LobbyView />}
+      {state.status === 'playing' && <GameBoard />}
+      {state.status === 'finished' && <ResultsView />}
+    </div>
+  )
+}
+
+function JoinForm({ onJoin }: { onJoin: (name: string) => void }) {
+  const [name, setName] = useState(getStoredPlayerName() || '')
+  const t = useTranslations('home')
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 min-h-dvh px-6">
+      <h1 className="text-3xl font-bold">{t('join')}</h1>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={t('namePlaceholder')}
+        maxLength={20}
+        className="w-full max-w-sm px-4 py-4 bg-gray-800 rounded-xl text-white placeholder-gray-500 text-lg outline-none focus:ring-2 focus:ring-blue-500"
+        autoFocus
+      />
+      <button
+        onClick={() => name.trim() && onJoin(name.trim())}
+        disabled={!name.trim()}
+        className="w-full max-w-sm py-4 bg-green-600 text-white rounded-xl text-lg font-bold active:bg-green-700 transition-colors disabled:opacity-50"
+      >
+        {t('join')}
+      </button>
+    </div>
+  )
+}

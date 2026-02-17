@@ -1,0 +1,75 @@
+{
+  "home": {
+    "title": "Яцзы",
+    "subtitle": "Многопользовательская игра в кости",
+    "namePlaceholder": "Ваше имя",
+    "createGame": "Создать игру",
+    "joinByCode": "Войти по коду",
+    "codePlaceholder": "Код комнаты",
+    "join": "Войти",
+    "playWithBots": "Играть с ботами"
+  },
+  "lobby": {
+    "title": "Лобби",
+    "roomCode": "Код комнаты",
+    "copyLink": "Скопировать ссылку",
+    "linkCopied": "Ссылка скопирована!",
+    "players": "Игроки",
+    "of": "из",
+    "waitingForPlayers": "Ожидание игроков...",
+    "addBot": "Добавить бота",
+    "startGame": "Начать игру",
+    "needMorePlayers": "Нужно минимум 2 игрока",
+    "host": "Хост",
+    "bot": "Бот"
+  },
+  "game": {
+    "round": "Раунд",
+    "of13": "из 13",
+    "yourTurn": "Ваш ход!",
+    "waitingFor": "Ожидание {name}...",
+    "roll": "Бросить",
+    "rollsLeft": "Осталось бросков: {count}",
+    "selectCategory": "Выберите категорию",
+    "held": "Удержано"
+  },
+  "scorecard": {
+    "title": "Таблица очков",
+    "upperSection": "Верхняя секция",
+    "lowerSection": "Нижняя секция",
+    "ones": "Единицы",
+    "twos": "Двойки",
+    "threes": "Тройки",
+    "fours": "Четвёрки",
+    "fives": "Пятёрки",
+    "sixes": "Шестёрки",
+    "upperBonus": "Бонус (63+)",
+    "upperTotal": "Итого (верх)",
+    "threeOfAKind": "Тройка",
+    "fourOfAKind": "Каре",
+    "fullHouse": "Фулл-хаус",
+    "smallStraight": "Малый стрит",
+    "largeStraight": "Большой стрит",
+    "yahtzee": "Яцзы",
+    "chance": "Шанс",
+    "lowerTotal": "Итого (низ)",
+    "grandTotal": "Общий итог"
+  },
+  "results": {
+    "title": "Игра окончена!",
+    "winner": "{name} побеждает!",
+    "finalScores": "Финальные очки",
+    "playAgain": "Играть снова",
+    "backToHome": "На главную"
+  },
+  "errors": {
+    "roomNotFound": "Комната не найдена",
+    "roomFull": "Комната заполнена",
+    "gameStarted": "Игра уже началась",
+    "connectionLost": "Соединение потеряно. Переподключение..."
+  },
+  "language": {
+    "en": "Английский",
+    "ru": "Русский"
+  }
+}
