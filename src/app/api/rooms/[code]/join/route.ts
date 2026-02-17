@@ -74,12 +74,8 @@ export async function POST(
   let playerIndex = 0
   while (usedIndices.has(playerIndex)) playerIndex++
 
-  // Use provided sessionId or create anonymous session
-  let finalSessionId = sessionId
-  if (!finalSessionId) {
-    const { data: authData } = await supabase.auth.signInAnonymously()
-    finalSessionId = authData.session?.user.id
-  }
+  // Use provided sessionId or generate new one
+  const finalSessionId = sessionId || crypto.randomUUID()
 
   // Add player
   const { data: newPlayer, error } = await supabase

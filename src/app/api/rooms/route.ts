@@ -31,12 +31,8 @@ export async function POST(request: NextRequest) {
     if (!existing) break
   } while (true)
 
-  // Create anonymous session for host
-  const { data: authData, error: authError } = await supabase.auth.signInAnonymously()
-  if (authError) {
-    return errorResponse('INTERNAL_ERROR', 'Failed to create session', 500)
-  }
-  const sessionId = authData.session!.user.id
+  // Generate session ID for host
+  const sessionId = crypto.randomUUID()
 
   // Create room
   const { data: room, error: roomError } = await supabase
