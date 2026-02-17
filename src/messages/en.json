@@ -31,7 +31,9 @@
     "roll": "Roll",
     "rollsLeft": "{count} rolls left",
     "selectCategory": "Select a category",
-    "held": "Held"
+    "held": "Held",
+    "botThinking": "{name} is thinking...",
+    "botChose": "{name} chose {category} for {score} points"
   },
   "scorecard": {
     "title": "Scorecard",

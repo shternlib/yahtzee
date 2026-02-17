@@ -31,7 +31,9 @@
     "roll": "Бросить",
     "rollsLeft": "Осталось бросков: {count}",
     "selectCategory": "Выберите категорию",
-    "held": "Удержано"
+    "held": "Удержано",
+    "botThinking": "{name} думает...",
+    "botChose": "{name}: {category} — {score} очков"
   },
   "scorecard": {
     "title": "Таблица очков",
