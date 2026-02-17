@@ -5,22 +5,31 @@ import { generateDice, rollDice } from '@/lib/yahtzee/dice'
 import { calculateAvailableScores } from '@/lib/yahtzee/scoring'
 import { createEmptyScorecard, type ScorecardData } from '@/lib/yahtzee/categories'
 
-// In-memory game state (per-room dice state)
-// In production, use Redis or Supabase Realtime state
-const roomDiceState = new Map<
-  string,
-  { dice: number[]; rollCount: number; held: boolean[]; scorecards: Record<number, ScorecardData> }
->()
-
-export function getRoomState(roomId: string) {
-  return roomDiceState.get(roomId)
+export interface RoomDiceState {
+  dice: number[]
+  rollCount: number
+  held: boolean[]
+  scorecards: Record<number, ScorecardData>
 }
 
-export function setRoomState(
-  roomId: string,
-  state: { dice: number[]; rollCount: number; held: boolean[]; scorecards: Record<number, ScorecardData> }
-) {
-  roomDiceState.set(roomId, state)
+/** Load game state from Supabase */
+export async function loadRoomState(roomId: string): Promise<RoomDiceState | null> {
+  const supabase = createServerClient()
+  const { data } = await supabase
+    .from('game_rooms')
+    .select('game_state')
+    .eq('id', roomId)
+    .single()
+  return data?.game_state as RoomDiceState | null
+}
+
+/** Save game state to Supabase */
+export async function saveRoomState(roomId: string, state: RoomDiceState | null) {
+  const supabase = createServerClient()
+  await supabase
+    .from('game_rooms')
+    .update({ game_state: state })
+    .eq('id', roomId)
 }
 
 export async function POST(
@@ -62,9 +71,8 @@ export async function POST(
   }
 
   // Get or initialize room dice state
-  let state = getRoomState(room.id)
+  let state = await loadRoomState(room.id)
   if (!state) {
-    // Initialize scorecards for all players
     const { data: players } = await supabase
       .from('players')
       .select('player_index')
@@ -81,7 +89,6 @@ export async function POST(
       held: [false, false, false, false, false],
       scorecards,
     }
-    setRoomState(room.id, state)
   }
 
   if (state.rollCount >= 3) {
@@ -97,7 +104,7 @@ export async function POST(
   state.dice = newDice
   state.rollCount += 1
   state.held = held
-  setRoomState(room.id, state)
+  await saveRoomState(room.id, state)
 
   // Calculate available categories
   const playerIndex = room.current_turn_player_index

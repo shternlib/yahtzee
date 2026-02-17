@@ -3,8 +3,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES, type Category } from '@/lib/yahtzee/categories'
 import { calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
-import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
-import { getRoomState, setRoomState } from '../roll/route'
+import { loadRoomState, saveRoomState } from '../roll/route'
 
 /** Skip a disconnected player's turn by scoring 0 in their lowest-value unfilled category */
 export async function POST(
@@ -47,19 +46,18 @@ export async function POST(
 
   const playerIndex = room.current_turn_player_index
 
-  let state = getRoomState(room.id)
+  let state = await loadRoomState(room.id)
   if (!state) {
-    const { data: players } = await supabase
+    const { data: allPlayers } = await supabase
       .from('players')
       .select('player_index')
       .eq('room_id', room.id)
 
     const scorecards: Record<number, import('@/lib/yahtzee/categories').ScorecardData> = {}
-    for (const p of players || []) {
+    for (const p of allPlayers || []) {
       scorecards[p.player_index] = createEmptyScorecard()
     }
     state = { dice: [0, 0, 0, 0, 0], rollCount: 0, held: [false, false, false, false, false], scorecards }
-    setRoomState(room.id, state)
   }
 
   const scorecard = state.scorecards[playerIndex] || createEmptyScorecard()
@@ -118,8 +116,7 @@ export async function POST(
       await supabase.from('game_scores').update({ is_winner: true }).eq('room_id', room.id).eq('player_id', scores[0].playerId)
     }
 
-    await supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', room.id)
-    setRoomState(room.id, undefined as any)
+    await supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString(), game_state: null }).eq('id', room.id)
 
     return NextResponse.json({
       skipped: true,
@@ -138,14 +135,7 @@ export async function POST(
   state.dice = [0, 0, 0, 0, 0]
   state.rollCount = 0
   state.held = [false, false, false, false, false]
-  setRoomState(room.id, state)
-
-  // Trigger bot turns if next player is a bot
-  const nextPlayer = (players || []).find(p => p.player_index === nextPlayerIndex)
-  if (nextPlayer?.is_bot) {
-    executeBotTurns(room.id, code.toUpperCase(), nextPlayerIndex, nextRound, playerCount)
-      .catch(err => console.error('Bot execution error:', err))
-  }
+  await saveRoomState(room.id, state)
 
   return NextResponse.json({
     skipped: true,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
-import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
 
 export async function POST(
   request: NextRequest,
@@ -58,13 +57,6 @@ export async function POST(
   }
 
   const turnOrder = (players || []).map((p) => p.player_index)
-
-  // If first player is a bot, auto-play their turn
-  const firstPlayer = (players || []).find(p => p.player_index === 0)
-  if (firstPlayer?.is_bot) {
-    executeBotTurns(room.id, code.toUpperCase(), 0, 1, (players || []).length)
-      .catch(err => console.error('Bot execution error:', err))
-  }
 
   return NextResponse.json({
     status: 'playing',

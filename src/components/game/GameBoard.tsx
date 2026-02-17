@@ -120,17 +120,44 @@ export function GameBoard() {
 
       const data = await res.json()
       if (res.ok) {
+        // Apply human player's score
+        let lastNextPlayer = data.nextPlayerIndex ?? state.currentTurn.playerIndex
+        let lastRound = data.round ?? state.round
+
         dispatch({
           type: 'SCORE_SELECTED',
           payload: {
             playerIndex: state.currentTurn.playerIndex,
             category,
             score: data.score,
-            nextPlayerIndex: data.nextPlayerIndex ?? state.currentTurn.playerIndex,
-            round: data.round ?? state.round,
+            nextPlayerIndex: lastNextPlayer,
+            round: lastRound,
             gameFinished: data.gameFinished ?? false,
           },
         })
+
+        // Apply bot turns if any
+        if (data.botTurns && data.botTurns.length > 0) {
+          for (const bt of data.botTurns) {
+            // Figure out next player after this bot
+            const afterBotIndex = data.botTurns.indexOf(bt) < data.botTurns.length - 1
+              ? data.botTurns[data.botTurns.indexOf(bt) + 1].playerIndex
+              : lastNextPlayer
+            const btRound = data.gameFinished ? lastRound : data.round ?? lastRound
+
+            dispatch({
+              type: 'SCORE_SELECTED',
+              payload: {
+                playerIndex: bt.playerIndex,
+                category: bt.category,
+                score: bt.score,
+                nextPlayerIndex: afterBotIndex,
+                round: btRound,
+                gameFinished: data.gameFinished ?? false,
+              },
+            })
+          }
+        }
 
         if (data.gameFinished) {
           dispatch({

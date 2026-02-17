@@ -2,9 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import { isCategory, type Category, TOTAL_ROUNDS, createEmptyScorecard } from '@/lib/yahtzee/categories'
-import { calculateScore, calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
-import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
-import { getRoomState, setRoomState } from '../roll/route'
+import { calculateScore, calculateAvailableScores, calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
+import { chooseCategory, chooseDiceToHold, shouldReroll } from '@/lib/yahtzee/bot'
+import { generateDice, rollDice } from '@/lib/yahtzee/dice'
+import { loadRoomState, saveRoomState, type RoomDiceState } from '../roll/route'
+
+interface BotTurnResult {
+  playerIndex: number
+  dice: number[]
+  category: Category
+  score: number
+}
 
 export async function POST(
   request: NextRequest,
@@ -48,7 +56,7 @@ export async function POST(
     }
   }
 
-  const state = getRoomState(room.id)
+  const state = await loadRoomState(room.id)
   if (!state || state.rollCount === 0) {
     return errorResponse('MUST_ROLL_FIRST', 'Must roll at least once before scoring', 409)
   }
@@ -78,74 +86,50 @@ export async function POST(
   let nextPlayerIndex = (playerIndex + 1) % playerCount
   let nextRound = room.current_round
 
-  // If we've gone through all players, advance round
   if (nextPlayerIndex <= playerIndex) {
     nextRound = room.current_round + 1
   }
 
-  // Check if game is finished (all scorecards complete)
+  // Check if game is finished
   const allComplete = Object.values(state.scorecards).every(isScorecardComplete)
-  const gameFinished = allComplete || nextRound > TOTAL_ROUNDS
+  let gameFinished = allComplete || nextRound > TOTAL_ROUNDS
 
   if (gameFinished) {
-    // Save final scores
-    for (const p of players || []) {
-      const sc = state.scorecards[p.player_index]
-      if (!sc) continue
-      const totals = calculateTotals(sc)
-
-      await supabase.from('game_scores').insert({
-        room_id: room.id,
-        player_id: p.id,
-        upper_total: totals.upperTotal,
-        upper_bonus: totals.upperBonus,
-        lower_total: totals.lowerTotal,
-        grand_total: totals.grandTotal,
-        scorecard_data: sc,
-        is_winner: false, // updated below
-      })
-    }
-
-    // Determine winner
-    const scores = (players || []).map((p) => ({
-      playerId: p.id,
-      playerIndex: p.player_index,
-      total: calculateTotals(state.scorecards[p.player_index] || createEmptyScorecard()).grandTotal,
-    }))
-    scores.sort((a, b) => b.total - a.total)
-
-    if (scores.length > 0) {
-      await supabase
-        .from('game_scores')
-        .update({ is_winner: true })
-        .eq('room_id', room.id)
-        .eq('player_id', scores[0].playerId)
-    }
-
-    // Update room status
-    await supabase
-      .from('game_rooms')
-      .update({
-        status: 'finished',
-        finished_at: new Date().toISOString(),
-      })
-      .eq('id', room.id)
-
-    // Clean up in-memory state
-    setRoomState(room.id, undefined as any)
-
-    return NextResponse.json({
-      score,
-      gameFinished: true,
-      scores: scores.map((s) => ({
-        playerIndex: s.playerIndex,
-        grandTotal: s.total,
-      })),
-      winner: scores[0]?.playerIndex,
-    })
+    return await finishGame(supabase, room.id, state, players || [], score)
   }
 
-  // Update room for next turn
+  // Execute bot turns synchronously
+  const botTurns: BotTurnResult[] = []
+  const isBot = (idx: number) => (players || []).find(p => p.player_index === idx)?.is_bot ?? false
+
+  while (isBot(nextPlayerIndex) && !gameFinished) {
+    const botResult = executeSingleBotTurn(state, nextPlayerIndex)
+    botTurns.push(botResult)
+
+    // Advance past bot
+    const afterBotIndex = (nextPlayerIndex + 1) % playerCount
+    let afterBotRound = nextRound
+    if (afterBotIndex <= nextPlayerIndex) {
+      afterBotRound = nextRound + 1
+    }
+
+    const allDone = Object.values(state.scorecards).every(isScorecardComplete)
+    gameFinished = allDone || afterBotRound > TOTAL_ROUNDS
+
+    if (gameFinished) {
+      return await finishGame(supabase, room.id, state, players || [], score, botTurns)
+    }
+
+    nextPlayerIndex = afterBotIndex
+    nextRound = afterBotRound
+  }
+
+  // Update room for next human turn
+  state.dice = [0, 0, 0, 0, 0]
+  state.rollCount = 0
+  state.held = [false, false, false, false, false]
+  await saveRoomState(room.id, state)
+
   await supabase
     .from('game_rooms')
     .update({
@@ -154,24 +138,86 @@ export async function POST(
     })
     .eq('id', room.id)
 
-  // Reset dice state for next turn
-  state.dice = [0, 0, 0, 0, 0]
-  state.rollCount = 0
-  state.held = [false, false, false, false, false]
-  setRoomState(room.id, state)
-
-  // Check if next player is a bot — execute bot turns asynchronously
-  const nextPlayer = (players || []).find(p => p.player_index === nextPlayerIndex)
-  if (nextPlayer?.is_bot) {
-    // Fire and forget — bot turns run in background, broadcast results via realtime
-    executeBotTurns(room.id, code.toUpperCase(), nextPlayerIndex, nextRound, playerCount)
-      .catch(err => console.error('Bot execution error:', err))
-  }
-
   return NextResponse.json({
     score,
     nextPlayerIndex,
     round: nextRound,
     gameFinished: false,
+    botTurns,
+  })
+}
+
+/** Execute a single bot turn: roll, decide, score */
+function executeSingleBotTurn(state: RoomDiceState, playerIndex: number): BotTurnResult {
+  const scorecard = state.scorecards[playerIndex] || createEmptyScorecard()
+
+  // First roll
+  let dice = generateDice()
+  let rollCount = 1
+
+  // Re-rolls
+  while (rollCount < 3 && shouldReroll(dice, scorecard, rollCount)) {
+    const held = chooseDiceToHold(dice, scorecard)
+    dice = rollDice(dice, held)
+    rollCount++
+  }
+
+  // Choose and score category
+  const cat = chooseCategory(dice, scorecard)
+  const sc = calculateScore(dice, cat)
+  scorecard[cat] = sc
+  state.scorecards[playerIndex] = scorecard
+
+  return { playerIndex, dice, category: cat, score: sc }
+}
+
+/** Finish the game: save scores, determine winner, clean up */
+async function finishGame(
+  supabase: ReturnType<typeof createServerClient>,
+  roomId: string,
+  state: RoomDiceState,
+  players: { id: string; player_index: number }[],
+  humanScore: number,
+  botTurns?: BotTurnResult[]
+) {
+  for (const p of players) {
+    const sc = state.scorecards[p.player_index]
+    if (!sc) continue
+    const totals = calculateTotals(sc)
+    await supabase.from('game_scores').insert({
+      room_id: roomId,
+      player_id: p.id,
+      upper_total: totals.upperTotal,
+      upper_bonus: totals.upperBonus,
+      lower_total: totals.lowerTotal,
+      grand_total: totals.grandTotal,
+      scorecard_data: sc,
+      is_winner: false,
+    })
+  }
+
+  const scores = players.map(p => ({
+    playerId: p.id,
+    playerIndex: p.player_index,
+    total: calculateTotals(state.scorecards[p.player_index] || createEmptyScorecard()).grandTotal,
+  }))
+  scores.sort((a, b) => b.total - a.total)
+
+  if (scores.length > 0) {
+    await supabase.from('game_scores').update({ is_winner: true }).eq('room_id', roomId).eq('player_id', scores[0].playerId)
+  }
+
+  await supabase.from('game_rooms').update({
+    status: 'finished',
+    finished_at: new Date().toISOString(),
+    game_state: null,
+  }).eq('id', roomId)
+
+  return NextResponse.json({
+    score: humanScore,
+    gameFinished: true,
+    scores: scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total })),
+    winner: scores[0]?.playerIndex,
+    botTurns,
   })
 }
