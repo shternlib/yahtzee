@@ -30,7 +30,6 @@ export function GameBoard() {
   const tScore = useTranslations('scorecard')
 
   const isMyTurn = !botAnimating && state.myPlayerIndex === state.currentTurn.playerIndex
-  const myScorecard = state.myPlayerIndex !== null ? state.scorecards[state.myPlayerIndex] : null
 
   const categoryNames: Record<string, string> = {
     ones: tScore('ones'), twos: tScore('twos'), threes: tScore('threes'),
@@ -295,10 +294,13 @@ export function GameBoard() {
         </div>
       )}
 
-      {myScorecard && (
+      {state.players.length > 0 && (
         <div className="px-4 mt-2">
           <Scorecard
-            scorecard={myScorecard}
+            players={state.players}
+            scorecards={state.scorecards}
+            currentTurnIndex={state.currentTurn.playerIndex}
+            myPlayerIndex={state.myPlayerIndex}
             availableCategories={isMyTurn && state.currentTurn.rollCount > 0 ? state.availableCategories : {}}
             onSelectCategory={handleSelectCategory}
             isInteractive={isMyTurn && state.currentTurn.rollCount > 0}
