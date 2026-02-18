@@ -163,7 +163,7 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
   }
 
   return (
-    <div className="relative pt-14">
+    <div className="relative pt-16">
       <div className="fixed top-3 left-3 z-10">
         <button
           onClick={() => setShowRules(true)}
