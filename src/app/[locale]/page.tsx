@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
@@ -10,10 +10,15 @@ import Image from 'next/image'
 export default function HomePage() {
   const t = useTranslations('home')
   const router = useRouter()
-  const [name, setName] = useState(() => getStoredPlayerName() || '')
+  const [name, setName] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const stored = getStoredPlayerName()
+    if (stored) setName(stored)
+  }, [])
 
   const handleCreate = async () => {
     if (!name.trim()) return
