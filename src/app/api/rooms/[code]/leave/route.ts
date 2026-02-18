@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 
 export async function POST(
@@ -68,6 +68,11 @@ export async function POST(
       .update({ host_session_id: nextHost.session_id })
       .eq('id', room.id)
   }
+
+  // Broadcast to remaining players
+  await broadcastToRoom(code.toUpperCase(), 'player_left', {
+    playerIndex: player.player_index,
+  })
 
   return NextResponse.json({ left: true, roomDeleted: false })
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import { isCategory, type Category, TOTAL_ROUNDS, createEmptyScorecard } from '@/lib/yahtzee/categories'
 import { calculateScore, calculateAvailableScores, calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
@@ -95,7 +95,7 @@ export async function POST(
   let gameFinished = allComplete || nextRound > TOTAL_ROUNDS
 
   if (gameFinished) {
-    return await finishGame(supabase, room.id, state, players || [], score)
+    return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score)
   }
 
   // Execute bot turns synchronously
@@ -117,7 +117,7 @@ export async function POST(
     gameFinished = allDone || afterBotRound > TOTAL_ROUNDS
 
     if (gameFinished) {
-      return await finishGame(supabase, room.id, state, players || [], score, botTurns)
+      return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score, botTurns)
     }
 
     nextPlayerIndex = afterBotIndex
@@ -137,6 +137,17 @@ export async function POST(
       current_round: nextRound,
     })
     .eq('id', room.id)
+
+  // Broadcast score update to other players
+  await broadcastToRoom(code.toUpperCase(), 'score_update', {
+    playerIndex,
+    category,
+    score,
+    nextPlayerIndex,
+    round: nextRound,
+    gameFinished: false,
+    botTurns,
+  })
 
   return NextResponse.json({
     score,
@@ -175,6 +186,7 @@ function executeSingleBotTurn(state: RoomDiceState, playerIndex: number): BotTur
 async function finishGame(
   supabase: ReturnType<typeof createServerClient>,
   roomId: string,
+  roomCode: string,
   state: RoomDiceState,
   players: { id: string; player_index: number }[],
   humanScore: number,
@@ -213,11 +225,17 @@ async function finishGame(
     game_state: null,
   }).eq('id', roomId)
 
+  const finalScores = scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total }))
+  const winner = scores[0]?.playerIndex
+
+  // Broadcast game end to all players
+  await broadcastToRoom(roomCode, 'game_end', { scores: finalScores, winner })
+
   return NextResponse.json({
     score: humanScore,
     gameFinished: true,
-    scores: scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total })),
-    winner: scores[0]?.playerIndex,
+    scores: finalScores,
+    winner,
     botTurns,
   })
 }

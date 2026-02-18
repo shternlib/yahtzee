@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 
 export async function POST(
@@ -57,6 +57,12 @@ export async function POST(
   }
 
   const turnOrder = (players || []).map((p) => p.player_index)
+
+  // Broadcast game start to all players
+  await broadcastToRoom(code.toUpperCase(), 'game_start', {
+    turnOrder,
+    firstPlayer: 0,
+  })
 
   return NextResponse.json({
     status: 'playing',

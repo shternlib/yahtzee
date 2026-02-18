@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import { generateDice, rollDice } from '@/lib/yahtzee/dice'
 import { calculateAvailableScores } from '@/lib/yahtzee/scoring'
@@ -110,6 +110,13 @@ export async function POST(
   const playerIndex = room.current_turn_player_index
   const scorecard = state.scorecards[playerIndex] || createEmptyScorecard()
   const availableCategories = calculateAvailableScores(newDice, scorecard)
+
+  // Broadcast dice roll to other players
+  await broadcastToRoom(code.toUpperCase(), 'dice_roll', {
+    dice: newDice,
+    rollCount: state.rollCount,
+    availableCategories,
+  })
 
   return NextResponse.json({
     dice: newDice,

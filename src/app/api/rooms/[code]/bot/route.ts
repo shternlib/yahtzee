@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 
 export async function POST(
@@ -68,6 +68,17 @@ export async function POST(
   if (error) {
     return errorResponse('INTERNAL_ERROR' as any, 'Failed to add bot', 500)
   }
+
+  // Broadcast to other players in the room
+  await broadcastToRoom(code.toUpperCase(), 'player_joined', {
+    player: {
+      id: bot.id,
+      displayName: bot.display_name,
+      playerIndex: bot.player_index,
+      isBot: true,
+      isConnected: true,
+    },
+  })
 
   return NextResponse.json({
     playerId: bot.id,

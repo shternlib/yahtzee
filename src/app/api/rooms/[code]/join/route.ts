@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 
 export async function POST(
@@ -92,6 +92,17 @@ export async function POST(
   if (error) {
     return errorResponse('INTERNAL_ERROR' as any, 'Failed to join room', 500)
   }
+
+  // Broadcast to other players in the room
+  await broadcastToRoom(code.toUpperCase(), 'player_joined', {
+    player: {
+      id: newPlayer.id,
+      displayName,
+      playerIndex: newPlayer.player_index,
+      isBot: false,
+      isConnected: true,
+    },
+  })
 
   // Fetch updated players list
   const { data: updatedPlayers } = await supabase
