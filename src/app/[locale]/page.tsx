@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
-import { storeSessionId, storePlayerName } from '@/lib/utils/session'
+import { storeSessionId, storePlayerName, getStoredPlayerName } from '@/lib/utils/session'
 import Image from 'next/image'
 
 export default function HomePage() {
   const t = useTranslations('home')
   const router = useRouter()
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => getStoredPlayerName() || '')
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
