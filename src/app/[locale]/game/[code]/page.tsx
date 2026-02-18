@@ -181,7 +181,7 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
         <LanguageToggle />
       </div>
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
-      {state.status === 'lobby' && <LobbyView />}
+      {state.status === 'lobby' && <LobbyView onShowRules={() => setShowRules(true)} />}
       {state.status === 'playing' && <GameBoard />}
       {state.status === 'finished' && <ResultsView />}
     </div>
