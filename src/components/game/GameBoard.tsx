@@ -355,6 +355,7 @@ export function GameBoard() {
           <Scorecard
             players={state.players}
             scorecards={state.scorecards}
+            lastMoves={state.lastMoves}
             currentTurnIndex={state.currentTurn.playerIndex}
             myPlayerIndex={state.myPlayerIndex}
             availableCategories={isMyTurn && state.currentTurn.rollCount > 0 ? state.availableCategories : {}}

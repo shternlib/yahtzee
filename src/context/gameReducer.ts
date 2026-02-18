@@ -17,6 +17,11 @@ export interface TurnState {
   rollCount: number
 }
 
+export interface LastMove {
+  category: Category
+  score: number
+}
+
 export interface GameState {
   roomCode: string
   roomId: string
@@ -24,6 +29,7 @@ export interface GameState {
   players: PlayerInfo[]
   currentTurn: TurnState
   scorecards: Record<number, ScorecardData>
+  lastMoves: Record<number, LastMove>
   round: number
   myPlayerIndex: number | null
   mySessionId: string | null
@@ -58,6 +64,7 @@ export const initialGameState: GameState = {
     rollCount: 0,
   },
   scorecards: {},
+  lastMoves: {},
   round: 1,
   myPlayerIndex: null,
   mySessionId: null,
@@ -156,6 +163,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         scorecards: { ...state.scorecards, [playerIndex]: updatedScorecard },
+        lastMoves: { ...state.lastMoves, [playerIndex]: { category, score } },
         round,
         status: gameFinished ? 'finished' : state.status,
         currentTurn: gameFinished
