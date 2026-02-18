@@ -78,27 +78,27 @@ export function LobbyView() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-6 min-h-screen">
-      <h1 className="text-2xl font-bold text-center">{t('title')}</h1>
+      <h1 className="text-2xl font-bold text-center text-dragon-text">{t('title')}</h1>
 
       <ShareLink roomCode={state.roomCode} />
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-dragon-muted">
           {t('players')} ({state.players.length} {t('of')} 4)
         </p>
         {state.players.map((player) => (
           <div
             key={player.playerIndex}
-            className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-xl"
+            className="flex items-center gap-3 p-3 bg-dragon-card/60 rounded-xl border border-dragon-purple/20"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-              player.isBot ? 'bg-purple-600' : 'bg-blue-600'
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+              player.isBot ? 'bg-dragon-purple' : 'bg-dragon-orange'
             }`}>
               {player.displayName[0].toUpperCase()}
             </div>
             <div className="flex-1">
-              <p className="font-medium">{player.displayName}</p>
-              <p className="text-xs text-gray-400">
+              <p className="font-medium text-dragon-text">{player.displayName}</p>
+              <p className="text-xs text-dragon-muted">
                 {player.playerIndex === 0 && t('host')}
                 {player.isBot && t('bot')}
               </p>
@@ -113,7 +113,7 @@ export function LobbyView() {
             <button
               onClick={handleAddBot}
               disabled={loading}
-              className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold active:bg-purple-700 transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-dragon-purple text-white rounded-xl font-semibold active:bg-dragon-purple/80 transition-colors disabled:opacity-50"
             >
               {t('addBot')}
             </button>
@@ -121,7 +121,7 @@ export function LobbyView() {
           <button
             onClick={handleStart}
             disabled={!canStart || loading}
-            className="w-full py-4 bg-green-600 text-white rounded-xl text-lg font-bold active:bg-green-700 transition-colors disabled:opacity-50"
+            className="w-full py-4 bg-dragon-orange text-white rounded-xl text-lg font-bold active:bg-dragon-orange-dark transition-colors disabled:opacity-50 shadow-lg shadow-dragon-orange/30"
           >
             {canStart ? t('startGame') : t('needMorePlayers')}
           </button>
@@ -129,7 +129,7 @@ export function LobbyView() {
       )}
 
       {!isHost && (
-        <p className="text-center text-gray-400 mt-auto py-4">
+        <p className="text-center text-dragon-muted mt-auto py-4">
           {t('waitingForPlayers')}
         </p>
       )}
@@ -137,7 +137,7 @@ export function LobbyView() {
       <button
         onClick={handleLeave}
         disabled={loading}
-        className="w-full py-3 text-gray-400 rounded-xl font-medium active:text-white transition-colors disabled:opacity-50"
+        className="w-full py-3 text-dragon-muted rounded-xl font-medium active:text-dragon-text transition-colors disabled:opacity-50"
       >
         {t('leave')}
       </button>

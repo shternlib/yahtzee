@@ -24,15 +24,15 @@ export function DiceControls({ rollCount, onRoll, disabled, isMyTurn }: DiceCont
           w-full max-w-xs py-4 rounded-2xl text-lg font-bold
           transition-all duration-200
           ${canRoll
-            ? 'bg-blue-600 text-white active:bg-blue-700 active:scale-[0.98] shadow-lg'
-            : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            ? 'bg-dragon-orange text-white active:bg-dragon-orange-dark active:scale-[0.98] shadow-lg shadow-dragon-orange/30'
+            : 'bg-dragon-card text-dragon-muted cursor-not-allowed'
           }
         `}
       >
         {rollCount === 0 ? t('roll') : rollsLeft > 0 ? `${t('roll')} (${rollsLeft})` : t('selectCategory')}
       </button>
       {rollCount > 0 && rollsLeft > 0 && (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-dragon-muted">
           {t('rollsLeft', { count: rollsLeft })}
         </p>
       )}

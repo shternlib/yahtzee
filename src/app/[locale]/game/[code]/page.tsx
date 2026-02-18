@@ -142,7 +142,7 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-dvh">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-dragon-orange border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -151,7 +151,7 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
     return (
       <div className="flex flex-col items-center justify-center gap-4 min-h-dvh px-6">
         <p className="text-red-400 text-lg">{error}</p>
-        <a href="/" className="text-blue-400 underline">Back to Home</a>
+        <a href="/" className="text-dragon-orange underline">Back to Home</a>
       </div>
     )
   }
@@ -185,13 +185,13 @@ function JoinForm({ onJoin }: { onJoin: (name: string) => void }) {
         onChange={(e) => setName(e.target.value)}
         placeholder={t('namePlaceholder')}
         maxLength={20}
-        className="w-full max-w-sm px-4 py-4 bg-gray-800 rounded-xl text-white placeholder-gray-500 text-lg outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full max-w-sm px-4 py-4 bg-dragon-card rounded-xl text-dragon-text placeholder-dragon-muted/50 text-lg outline-none focus:ring-2 focus:ring-dragon-orange border border-dragon-purple/30"
         autoFocus
       />
       <button
         onClick={() => name.trim() && onJoin(name.trim())}
         disabled={!name.trim()}
-        className="w-full max-w-sm py-4 bg-green-600 text-white rounded-xl text-lg font-bold active:bg-green-700 transition-colors disabled:opacity-50"
+        className="w-full max-w-sm py-4 bg-dragon-orange text-white rounded-xl text-lg font-bold active:bg-dragon-orange-dark transition-colors disabled:opacity-50 shadow-lg shadow-dragon-orange/30"
       >
         {t('join')}
       </button>

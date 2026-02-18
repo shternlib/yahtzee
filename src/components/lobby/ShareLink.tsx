@@ -18,7 +18,7 @@ export function ShareLink({ roomCode }: ShareLinkProps) {
   const handleCopy = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Yahtzee', url: shareUrl })
+        await navigator.share({ title: 'Dragon Dice', url: shareUrl })
       } else {
         await navigator.clipboard.writeText(shareUrl)
         setCopied(true)
@@ -30,12 +30,12 @@ export function ShareLink({ roomCode }: ShareLinkProps) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 p-4 bg-gray-800/50 rounded-2xl">
-      <p className="text-xs text-gray-400 uppercase tracking-wider">{t('roomCode')}</p>
-      <p className="text-4xl font-mono font-bold tracking-[0.3em] text-white">{roomCode}</p>
+    <div className="flex flex-col items-center gap-3 p-4 bg-dragon-card/60 rounded-2xl border border-dragon-purple/20">
+      <p className="text-xs text-dragon-muted uppercase tracking-wider">{t('roomCode')}</p>
+      <p className="text-4xl font-mono font-bold tracking-[0.3em] text-dragon-orange">{roomCode}</p>
       <button
         onClick={handleCopy}
-        className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold active:bg-blue-700 transition-colors"
+        className="w-full py-3 bg-dragon-blue text-white rounded-xl font-semibold active:bg-dragon-blue/80 transition-colors"
       >
         {copied ? t('linkCopied') : t('copyLink')}
       </button>

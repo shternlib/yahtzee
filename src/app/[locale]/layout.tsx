@@ -6,8 +6,8 @@ import { GameProvider } from '@/context/GameContext'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
-  title: 'Yahtzee Multiplayer',
-  description: 'Play Yahtzee with friends online',
+  title: 'Dragon Dice — Yahtzee',
+  description: 'Dragon Family World — play Yahtzee with friends and dragons!',
 }
 
 export const viewport: Viewport = {
@@ -29,7 +29,12 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className="bg-gray-900 text-white antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-dragon-bg text-dragon-text antialiased">
         <NextIntlClientProvider messages={messages}>
           <GameProvider>
             <main className="min-h-dvh max-w-lg mx-auto">

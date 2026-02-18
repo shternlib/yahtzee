@@ -16,7 +16,7 @@ export function LanguageToggle() {
   return (
     <button
       onClick={toggleLocale}
-      className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-700 active:bg-gray-600 transition-colors"
+      className="px-3 py-1.5 bg-dragon-card border border-dragon-purple/30 rounded-xl text-sm font-medium text-dragon-muted hover:text-dragon-text active:bg-dragon-card-light transition-colors"
       aria-label="Switch language"
     >
       {locale === 'en' ? 'RU' : 'EN'}

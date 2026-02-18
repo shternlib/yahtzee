@@ -1,19 +1,23 @@
 @import "tailwindcss";
 
-:root {
-  --background: #111827;
-  --foreground: #f9fafb;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-dragon-bg: #1a1332;
+  --color-dragon-card: #261e42;
+  --color-dragon-card-light: #322752;
+  --color-dragon-orange: #f68223;
+  --color-dragon-orange-dark: #d96e15;
+  --color-dragon-blue: #3baac9;
+  --color-dragon-green: #93c160;
+  --color-dragon-cyan: #a0e6ff;
+  --color-dragon-purple: #7c5cbf;
+  --color-dragon-text: #f5f0ff;
+  --color-dragon-muted: #a89cc4;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(180deg, #1a1332 0%, #0f1a2e 50%, #1a1332 100%);
+  color: var(--color-dragon-text);
+  font-family: 'Rubik', Arial, Helvetica, sans-serif;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
 }
@@ -21,16 +25,24 @@ body {
 /* Dice roll animation */
 @keyframes dice-shake {
   0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-10deg) scale(1.05); }
-  50% { transform: rotate(10deg) scale(0.95); }
-  75% { transform: rotate(-5deg) scale(1.02); }
+  25% { transform: rotate(-12deg) scale(1.08); }
+  50% { transform: rotate(12deg) scale(0.94); }
+  75% { transform: rotate(-6deg) scale(1.03); }
 }
 
 .dice-rolling {
-  animation: dice-shake 0.3s ease-in-out infinite;
+  animation: dice-shake 0.25s ease-in-out infinite;
 }
 
-/* Smooth transitions */
 .dice-face {
   transition: all 0.2s ease;
+}
+
+/* Scrollbar hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

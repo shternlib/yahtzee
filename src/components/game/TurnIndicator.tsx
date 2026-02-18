@@ -15,11 +15,11 @@ export function TurnIndicator({ currentPlayerIndex, players, round, isMyTurn }: 
   const currentPlayer = players.find((p) => p.playerIndex === currentPlayerIndex)
 
   return (
-    <div className={`text-center py-3 px-4 rounded-xl ${isMyTurn ? 'bg-green-900/30 border border-green-500/30' : 'bg-gray-800/50'}`}>
-      <p className="text-xs text-gray-400 mb-1">
+    <div className={`text-center py-3 px-4 rounded-2xl ${isMyTurn ? 'bg-dragon-orange/15 border border-dragon-orange/30' : 'bg-dragon-card/60'}`}>
+      <p className="text-xs text-dragon-muted mb-1">
         {t('round')} {round} {t('of13')}
       </p>
-      <p className={`text-lg font-bold ${isMyTurn ? 'text-green-400' : 'text-white'}`}>
+      <p className={`text-lg font-bold ${isMyTurn ? 'text-dragon-orange' : 'text-dragon-text'}`}>
         {isMyTurn ? t('yourTurn') : t('waitingFor', { name: currentPlayer?.displayName || '...' })}
       </p>
     </div>

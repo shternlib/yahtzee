@@ -285,14 +285,14 @@ export function GameBoard() {
       {/* Quit confirmation modal */}
       {showQuitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
-          <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-xs flex flex-col gap-4">
-            <p className="text-center text-base font-medium">
+          <div className="bg-dragon-card rounded-2xl p-6 w-full max-w-xs flex flex-col gap-4 border border-dragon-purple/30">
+            <p className="text-center text-base font-medium text-dragon-text">
               {isSoloVsBots ? t('confirmEnd') : t('confirmLeave')}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowQuitConfirm(false)}
-                className="flex-1 py-3 bg-gray-700 rounded-xl font-semibold active:bg-gray-600 transition-colors"
+                className="flex-1 py-3 bg-dragon-card-light rounded-xl font-semibold text-dragon-muted active:bg-dragon-purple/30 transition-colors"
               >
                 {t('cancel')}
               </button>
