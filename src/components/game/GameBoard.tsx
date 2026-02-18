@@ -7,7 +7,6 @@ import { DiceScene } from '@/components/dice/DiceScene'
 import { DiceControls } from '@/components/dice/DiceControls'
 import { Scorecard } from '@/components/scorecard/Scorecard'
 import { TurnIndicator } from './TurnIndicator'
-import { PlayerList } from './PlayerList'
 import type { Category } from '@/lib/yahtzee/categories'
 
 const DISCONNECT_SKIP_TIMEOUT = 30_000
@@ -247,13 +246,6 @@ export function GameBoard() {
 
   return (
     <div className="flex flex-col gap-3 min-h-screen pb-4">
-      <PlayerList
-        players={state.players}
-        currentTurnIndex={state.currentTurn.playerIndex}
-        myIndex={state.myPlayerIndex}
-        scorecards={state.scorecards}
-      />
-
       <TurnIndicator
         currentPlayerIndex={state.currentTurn.playerIndex}
         players={state.players}

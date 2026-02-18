@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import type { Category, ScorecardData } from '@/lib/yahtzee/categories'
 import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '@/lib/yahtzee/categories'
@@ -26,161 +27,136 @@ export function Scorecard({
   isInteractive,
 }: ScorecardProps) {
   const t = useTranslations('scorecard')
+  const [viewingIndex, setViewingIndex] = useState(currentTurnIndex)
+
+  // Auto-switch to current turn player when turn changes
+  useEffect(() => {
+    setViewingIndex(currentTurnIndex)
+  }, [currentTurnIndex])
 
   const sortedPlayers = [...players].sort((a, b) => a.playerIndex - b.playerIndex)
-  const totalsMap = new Map(
-    sortedPlayers.map((p) => [p.playerIndex, calculateTotals(scorecards[p.playerIndex] || {} as ScorecardData)])
-  )
+  const viewedScorecard = scorecards[viewingIndex] || ({} as ScorecardData)
+  const viewedTotals = calculateTotals(viewedScorecard)
+  const isViewingMe = viewingIndex === myPlayerIndex
+  const isViewingCurrentTurn = viewingIndex === currentTurnIndex
+  const canInteract = isViewingMe && isInteractive
 
-  function renderCategoryRow(cat: Category) {
+  function renderRow(cat: Category) {
+    const score = viewedScorecard[cat] ?? null
+    const available = canInteract ? availableCategories[cat] : undefined
+    const canSelect = canInteract && score === null && available !== undefined
+
     return (
-      <tr key={cat} className="border-b border-gray-700/50">
-        <td className="sticky left-0 z-10 bg-gray-900 px-2 py-1.5 text-xs text-gray-300 whitespace-nowrap">
+      <button
+        key={cat}
+        onClick={canSelect ? () => onSelectCategory?.(cat) : undefined}
+        disabled={!canSelect}
+        className={`
+          flex items-center justify-between w-full px-4 py-3 min-h-[48px] rounded-xl text-sm
+          transition-all duration-150
+          ${canSelect
+            ? 'bg-blue-900/30 border border-blue-500/40 active:bg-blue-800/50'
+            : score !== null
+              ? 'bg-gray-800/40'
+              : 'bg-gray-800/20'
+          }
+        `}
+      >
+        <span className={
+          score !== null ? 'text-gray-300' : canSelect ? 'text-blue-300' : 'text-gray-500'
+        }>
           {t(cat)}
-        </td>
-        {sortedPlayers.map((player) => {
-          const sc = scorecards[player.playerIndex]
-          const score = sc ? sc[cat] : null
-          const isMe = player.playerIndex === myPlayerIndex
-          const isTurn = player.playerIndex === currentTurnIndex
-          const available = isMe && isInteractive ? availableCategories[cat] : undefined
-          const canSelect = isMe && isInteractive && score === null && available !== undefined
-
-          return (
-            <td
-              key={player.playerIndex}
-              className={`px-1 py-1.5 text-center text-xs font-mono relative
-                ${isTurn ? 'bg-blue-900/25' : ''}
-              `}
-              onClick={canSelect ? () => onSelectCategory?.(cat) : undefined}
-            >
-              {canSelect ? (
-                <span className="text-green-400 font-bold cursor-pointer active:text-green-300">
-                  {available}
-                </span>
-              ) : score !== null ? (
-                <span className={`font-bold ${isMe ? 'text-white' : 'text-gray-300'}`}>
-                  {score}
-                </span>
-              ) : (
-                <span className="text-gray-600">&mdash;</span>
-              )}
-            </td>
-          )
-        })}
-      </tr>
-    )
-  }
-
-  function renderTotalRow(label: string, getValue: (playerIndex: number) => string | number, bold?: boolean) {
-    return (
-      <tr className={bold ? 'border-t-2 border-gray-600' : 'border-t border-gray-700/50'}>
-        <td className={`sticky left-0 z-10 bg-gray-900 px-2 py-1.5 text-xs whitespace-nowrap ${bold ? 'font-bold text-gray-200' : 'text-gray-400'}`}>
-          {label}
-        </td>
-        {sortedPlayers.map((player) => {
-          const isTurn = player.playerIndex === currentTurnIndex
-          return (
-            <td
-              key={player.playerIndex}
-              className={`px-1 py-1.5 text-center text-xs font-mono ${bold ? 'font-bold text-white' : 'text-gray-400'} ${isTurn ? 'bg-blue-900/25' : ''}`}
-            >
-              {getValue(player.playerIndex)}
-            </td>
-          )
-        })}
-      </tr>
+        </span>
+        <span className={`font-mono text-base font-bold ${
+          canSelect ? 'text-green-400 text-lg' : score !== null ? 'text-white' : 'text-gray-600'
+        }`}>
+          {canSelect ? available : score !== null ? score : '\u2014'}
+        </span>
+      </button>
     )
   }
 
   return (
-    <div className="bg-gray-800/50 rounded-2xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-0">
-          <thead>
-            <tr className="border-b border-gray-600">
-              <th className="sticky left-0 z-20 bg-gray-800 px-2 py-2 text-left text-[10px] text-gray-500 uppercase tracking-wider w-24" />
-              {sortedPlayers.map((player) => {
-                const isTurn = player.playerIndex === currentTurnIndex
-                const isMe = player.playerIndex === myPlayerIndex
-                const total = totalsMap.get(player.playerIndex)
-                return (
-                  <th
-                    key={player.playerIndex}
-                    className={`px-1 py-2 text-center min-w-[52px] ${isTurn ? 'bg-blue-900/25' : ''}`}
-                  >
-                    <div className={`
-                      inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold mb-0.5
-                      ${isMe ? 'bg-blue-600 text-white' : player.isBot ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-200'}
-                      ${isTurn ? 'ring-2 ring-blue-400' : ''}
-                    `}>
-                      {player.displayName[0].toUpperCase()}
-                    </div>
-                    <div className="text-[10px] text-gray-400 truncate max-w-[52px]">
-                      {player.displayName}
-                    </div>
-                    <div className="text-[10px] font-mono font-bold text-gray-300">
-                      {total?.grandTotal ?? 0}
-                    </div>
-                  </th>
-                )
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {/* Upper section header */}
-            <tr>
-              <td
-                colSpan={sortedPlayers.length + 1}
-                className="px-2 pt-2 pb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-900/50"
-              >
-                {t('upperSection')}
-              </td>
-            </tr>
-            {UPPER_CATEGORIES.map((cat) => renderCategoryRow(cat))}
-            {renderTotalRow(
-              t('upperBonus'),
-              (idx) => {
-                const tot = totalsMap.get(idx)
-                return tot && tot.upperBonus > 0 ? `+${tot.upperBonus}` : `${tot?.upperTotal ?? 0}/63`
-              }
-            )}
-            {renderTotalRow(t('upperTotal'), (idx) => {
-              const tot = totalsMap.get(idx)
-              return (tot?.upperTotal ?? 0) + (tot?.upperBonus ?? 0)
-            }, true)}
+    <div className="flex flex-col gap-3">
+      {/* Player tabs */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+        {sortedPlayers.map((player) => {
+          const total = calculateTotals(scorecards[player.playerIndex] || {} as ScorecardData).grandTotal
+          const isTurn = player.playerIndex === currentTurnIndex
+          const isSelected = player.playerIndex === viewingIndex
+          const isMe = player.playerIndex === myPlayerIndex
 
-            {/* Lower section header */}
-            <tr>
-              <td
-                colSpan={sortedPlayers.length + 1}
-                className="px-2 pt-3 pb-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider bg-gray-900/50"
-              >
-                {t('lowerSection')}
-              </td>
-            </tr>
-            {LOWER_CATEGORIES.map((cat) => renderCategoryRow(cat))}
-            {renderTotalRow(t('lowerTotal'), (idx) => totalsMap.get(idx)?.lowerTotal ?? 0, true)}
+          return (
+            <button
+              key={player.playerIndex}
+              onClick={() => setViewingIndex(player.playerIndex)}
+              className={`
+                flex flex-col items-center gap-0.5 min-w-[64px] px-3 py-2 rounded-xl transition-all
+                ${isSelected ? 'bg-gray-700/80 scale-105' : 'bg-gray-800/40 active:bg-gray-700/50'}
+                ${isTurn && !isSelected ? 'ring-2 ring-blue-500/60' : ''}
+              `}
+            >
+              <div className={`
+                w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold
+                ${isMe ? 'bg-blue-600 text-white' : player.isBot ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-200'}
+                ${isTurn ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-gray-900' : ''}
+              `}>
+                {player.displayName[0].toUpperCase()}
+              </div>
+              <span className={`text-[11px] truncate max-w-[60px] ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                {player.displayName}
+              </span>
+              <span className={`text-xs font-mono font-bold ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+                {total}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
-            {/* Grand total */}
-            <tr className="border-t-2 border-gray-500">
-              <td className="sticky left-0 z-10 bg-blue-900/30 px-2 py-2 text-sm font-bold text-white whitespace-nowrap">
-                {t('grandTotal')}
-              </td>
-              {sortedPlayers.map((player) => {
-                const isTurn = player.playerIndex === currentTurnIndex
-                return (
-                  <td
-                    key={player.playerIndex}
-                    className={`px-1 py-2 text-center text-sm font-mono font-bold text-white ${isTurn ? 'bg-blue-900/40' : 'bg-blue-900/20'}`}
-                  >
-                    {totalsMap.get(player.playerIndex)?.grandTotal ?? 0}
-                  </td>
-                )
-              })}
-            </tr>
-          </tbody>
-        </table>
+      {/* Viewed player label */}
+      {!isViewingMe && (
+        <div className="text-center">
+          <span className={`text-xs px-3 py-1 rounded-full ${
+            isViewingCurrentTurn ? 'bg-blue-900/40 text-blue-300' : 'bg-gray-800 text-gray-400'
+          }`}>
+            {sortedPlayers.find(p => p.playerIndex === viewingIndex)?.displayName}
+          </span>
+        </div>
+      )}
+
+      {/* Scorecard */}
+      <div className="flex flex-col gap-1 p-3 bg-gray-800/50 rounded-2xl">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mb-1">
+          {t('upperSection')}
+        </h3>
+        {UPPER_CATEGORIES.map(renderRow)}
+        <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-400 border-t border-gray-700 mt-1">
+          <span>{t('upperBonus')}</span>
+          <span className="font-mono">
+            {viewedTotals.upperBonus > 0 ? `+${viewedTotals.upperBonus}` : `${viewedTotals.upperTotal}/63`}
+          </span>
+        </div>
+        <div className="flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-300 border-b border-gray-700 mb-2">
+          <span>{t('upperTotal')}</span>
+          <span className="font-mono">{viewedTotals.upperTotal + viewedTotals.upperBonus}</span>
+        </div>
+
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-2 mb-1">
+          {t('lowerSection')}
+        </h3>
+        {LOWER_CATEGORIES.map(renderRow)}
+        <div className="flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-300 border-t border-gray-700 mt-1">
+          <span>{t('lowerTotal')}</span>
+          <span className="font-mono">{viewedTotals.lowerTotal}</span>
+        </div>
+
+        <div className={`flex items-center justify-between px-4 py-3 mt-1 rounded-lg text-base font-bold ${
+          isViewingCurrentTurn ? 'bg-blue-900/40' : 'bg-blue-900/20'
+        }`}>
+          <span>{t('grandTotal')}</span>
+          <span className="font-mono text-lg">{viewedTotals.grandTotal}</span>
+        </div>
       </div>
     </div>
   )
