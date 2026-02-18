@@ -275,24 +275,14 @@ export function GameBoard() {
 
   return (
     <div className="flex flex-col gap-3 min-h-screen pb-4">
-      <div className="flex items-start gap-2 px-4 pt-2">
-        <div className="flex-1">
-          <TurnIndicator
-            currentPlayerIndex={state.currentTurn.playerIndex}
-            players={state.players}
-            round={state.round}
-            isMyTurn={isMyTurn}
-          />
-        </div>
-        <button
-          onClick={() => setShowQuitConfirm(true)}
-          className="shrink-0 mt-1 px-3 py-2 text-xs text-gray-400 bg-gray-800/60 rounded-lg active:bg-gray-700 transition-colors"
-        >
-          {isSoloVsBots ? t('endGame') : t('leaveGame')}
-        </button>
-      </div>
+      <TurnIndicator
+        currentPlayerIndex={state.currentTurn.playerIndex}
+        players={state.players}
+        round={state.round}
+        isMyTurn={isMyTurn}
+      />
 
-      {/* Quit confirmation */}
+      {/* Quit confirmation modal */}
       {showQuitConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
           <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-xs flex flex-col gap-4">
@@ -364,6 +354,13 @@ export function GameBoard() {
           />
         </div>
       )}
+
+      <button
+        onClick={() => setShowQuitConfirm(true)}
+        className="mx-auto mt-4 mb-2 text-xs text-gray-500 active:text-gray-300 transition-colors"
+      >
+        {isSoloVsBots ? t('endGame') : t('leaveGame')}
+      </button>
     </div>
   )
 }
