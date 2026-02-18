@@ -8,6 +8,14 @@ import '@/app/globals.css'
 export const metadata: Metadata = {
   title: 'Dragon Dice — Yahtzee',
   description: 'Dragon Family World — play Yahtzee with friends and dragons!',
+  appleWebApp: {
+    capable: true,
+    title: 'Dragon Dice',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export const viewport: Viewport = {
