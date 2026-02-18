@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useGame } from '@/context/GameContext'
+import { useRouter } from '@/i18n/routing'
 import { DiceScene } from '@/components/dice/DiceScene'
 import { DiceControls } from '@/components/dice/DiceControls'
 import { Scorecard } from '@/components/scorecard/Scorecard'
@@ -20,15 +21,18 @@ interface BotTurn {
 
 export function GameBoard() {
   const { state, dispatch } = useGame()
+  const router = useRouter()
   const [rolling, setRolling] = useState(false)
   const [loading, setLoading] = useState(false)
   const [botAnimating, setBotAnimating] = useState(false)
   const [botLastAction, setBotLastAction] = useState<string | null>(null)
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false)
   const skipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const t = useTranslations('game')
   const tScore = useTranslations('scorecard')
 
   const isMyTurn = !botAnimating && state.myPlayerIndex === state.currentTurn.playerIndex
+  const isSoloVsBots = state.players.filter(p => !p.isBot).length <= 1
 
   const categoryNames: Record<string, string> = {
     ones: tScore('ones'), twos: tScore('twos'), threes: tScore('threes'),
@@ -240,18 +244,78 @@ export function GameBoard() {
     dispatch({ type: 'TOGGLE_HOLD', payload: { dieIndex: index } })
   }, [isMyTurn, state.currentTurn.rollCount, dispatch])
 
+  const handleQuit = useCallback(async () => {
+    setShowQuitConfirm(false)
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/rooms/${state.roomCode}/quit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: state.mySessionId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.action === 'finished') {
+        dispatch({
+          type: 'GAME_END',
+          payload: { scores: data.scores, winner: data.winner },
+        })
+      } else {
+        router.push('/')
+      }
+    } catch {
+      router.push('/')
+    } finally {
+      setLoading(false)
+    }
+  }, [state.roomCode, state.mySessionId, dispatch, router])
+
   // Get current bot info for display
   const currentPlayer = state.players.find(p => p.playerIndex === state.currentTurn.playerIndex)
   const isBotTurn = botAnimating && currentPlayer?.isBot
 
   return (
     <div className="flex flex-col gap-3 min-h-screen pb-4">
-      <TurnIndicator
-        currentPlayerIndex={state.currentTurn.playerIndex}
-        players={state.players}
-        round={state.round}
-        isMyTurn={isMyTurn}
-      />
+      <div className="flex items-start gap-2 px-4 pt-2">
+        <div className="flex-1">
+          <TurnIndicator
+            currentPlayerIndex={state.currentTurn.playerIndex}
+            players={state.players}
+            round={state.round}
+            isMyTurn={isMyTurn}
+          />
+        </div>
+        <button
+          onClick={() => setShowQuitConfirm(true)}
+          className="shrink-0 mt-1 px-3 py-2 text-xs text-gray-400 bg-gray-800/60 rounded-lg active:bg-gray-700 transition-colors"
+        >
+          {isSoloVsBots ? t('endGame') : t('leaveGame')}
+        </button>
+      </div>
+
+      {/* Quit confirmation */}
+      {showQuitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
+          <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-xs flex flex-col gap-4">
+            <p className="text-center text-base font-medium">
+              {isSoloVsBots ? t('confirmEnd') : t('confirmLeave')}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowQuitConfirm(false)}
+                className="flex-1 py-3 bg-gray-700 rounded-xl font-semibold active:bg-gray-600 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={handleQuit}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-semibold active:bg-red-700 transition-colors"
+              >
+                {t('confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isBotTurn && (
         <div className="text-center px-4">

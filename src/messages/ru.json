@@ -34,7 +34,13 @@
     "selectCategory": "Выберите категорию",
     "held": "Удержано",
     "botThinking": "{name} думает...",
-    "botChose": "{name}: {category} — {score} очков"
+    "botChose": "{name}: {category} — {score} очков",
+    "endGame": "Завершить",
+    "leaveGame": "Выйти",
+    "confirmEnd": "Завершить игру и посмотреть результаты?",
+    "confirmLeave": "Выйти из игры?",
+    "confirm": "Да",
+    "cancel": "Отмена"
   },
   "scorecard": {
     "title": "Таблица очков",

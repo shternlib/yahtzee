@@ -34,7 +34,13 @@
     "selectCategory": "Select a category",
     "held": "Held",
     "botThinking": "{name} is thinking...",
-    "botChose": "{name} chose {category} for {score} points"
+    "botChose": "{name} chose {category} for {score} points",
+    "endGame": "End Game",
+    "leaveGame": "Leave",
+    "confirmEnd": "End the game and see results?",
+    "confirmLeave": "Leave this game?",
+    "confirm": "Yes",
+    "cancel": "Cancel"
   },
   "scorecard": {
     "title": "Scorecard",
