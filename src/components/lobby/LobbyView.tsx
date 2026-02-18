@@ -1,16 +1,67 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useGame } from '@/context/GameContext'
 import { useRouter } from '@/i18n/routing'
 import { ShareLink } from './ShareLink'
+
+const POLL_INTERVAL = 3000
 
 export function LobbyView() {
   const t = useTranslations('lobby')
   const { state, dispatch } = useGame()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Poll for lobby updates (new players joining/leaving)
+  useEffect(() => {
+    if (!state.roomCode) return
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/rooms/${state.roomCode}`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        // Sync player list
+        for (const p of data.players) {
+          if (!state.players.some(ep => ep.playerIndex === p.playerIndex)) {
+            dispatch({
+              type: 'PLAYER_JOINED',
+              payload: {
+                id: p.id,
+                displayName: p.displayName,
+                playerIndex: p.playerIndex,
+                isBot: p.isBot,
+                isConnected: true,
+              },
+            })
+          }
+        }
+        // Remove players who left
+        for (const ep of state.players) {
+          if (!data.players.some((p: { playerIndex: number }) => p.playerIndex === ep.playerIndex)) {
+            dispatch({ type: 'PLAYER_LEFT', payload: { playerIndex: ep.playerIndex } })
+          }
+        }
+
+        // If game started (host pressed start on another device or via broadcast)
+        if (data.status === 'playing') {
+          const turnOrder = data.players.map((p: { playerIndex: number }) => p.playerIndex)
+          dispatch({ type: 'GAME_START', payload: { turnOrder, firstPlayer: data.currentTurnPlayerIndex ?? 0 } })
+        }
+      } catch {
+        // Ignore network errors during polling
+      }
+    }
+
+    pollRef.current = setInterval(poll, POLL_INTERVAL)
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
+  }, [state.roomCode, state.players, dispatch])
 
   const isHost = state.mySessionId === state.hostSessionId
   const canStart = state.players.length >= 2
