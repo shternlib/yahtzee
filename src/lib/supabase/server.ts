@@ -8,42 +8,31 @@ export function createServerClient() {
   return createClient(supabaseUrl, supabaseServiceKey)
 }
 
-/** Broadcast an event to all players in a room's realtime channel */
+/** Broadcast an event to all players in a room via Supabase Realtime HTTP API.
+ *  Uses HTTP instead of WebSocket — reliable in Vercel serverless. */
 export async function broadcastToRoom(
   roomCode: string,
   event: string,
   payload: Record<string, unknown>
 ) {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
-  const channel = supabase.channel(`game:room:${roomCode}`)
-
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      supabase.removeChannel(channel)
-      reject(new Error('Broadcast subscribe timeout'))
-    }, 5000)
-
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        channel
-          .send({ type: 'broadcast', event, payload })
-          .then(() => {
-            clearTimeout(timeout)
-            supabase.removeChannel(channel)
-            resolve()
-          })
-          .catch((err) => {
-            clearTimeout(timeout)
-            supabase.removeChannel(channel)
-            reject(err)
-          })
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        clearTimeout(timeout)
-        supabase.removeChannel(channel)
-        reject(new Error(`Channel ${status}`))
-      }
+  try {
+    await fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: supabaseServiceKey,
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            topic: `game:room:${roomCode}`,
+            event,
+            payload,
+          },
+        ],
+      }),
     })
-  }).catch(() => {
+  } catch {
     // Non-critical: don't fail the API request if broadcast fails
-  })
+  }
 }

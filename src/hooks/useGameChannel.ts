@@ -57,7 +57,13 @@ export function useGameChannel(roomCode: string | null) {
       .on('broadcast', { event: 'player_left' }, ({ payload }) => {
         dispatch({ type: 'PLAYER_LEFT', payload: { playerIndex: payload.playerIndex } })
       })
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[Realtime] Connected to game:room:${roomCode}`)
+        } else {
+          console.warn(`[Realtime] Channel status: ${status}`)
+        }
+      })
 
     return () => {
       channel.unsubscribe()
