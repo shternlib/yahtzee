@@ -98,7 +98,7 @@ export default function HomePage() {
           width={140}
           height={140}
           priority
-          className="drop-shadow-[0_4px_24px_rgba(246,130,35,0.4)]"
+          className="drop-shadow-[0_4px_24px_rgba(246,130,35,0.4)] animate-float"
         />
         <h1 className="text-4xl font-extrabold mt-2 bg-gradient-to-r from-dragon-orange via-yellow-400 to-dragon-orange bg-clip-text text-transparent">
           {t('title')}
