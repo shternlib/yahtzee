@@ -141,7 +141,7 @@ export default function HomePage() {
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder={t('codePlaceholder')}
-            maxLength={6}
+            maxLength={4}
             className="flex-1 px-4 py-3 bg-dragon-card border border-dragon-purple/30 rounded-2xl text-dragon-text placeholder-dragon-muted/50 font-mono text-lg tracking-wider outline-none focus:ring-2 focus:ring-dragon-orange/60 uppercase transition-shadow"
           />
           <button
