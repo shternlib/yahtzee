@@ -16,7 +16,34 @@ export async function broadcastToRoom(
 ) {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
   const channel = supabase.channel(`game:room:${roomCode}`)
-  await channel.subscribe()
-  await channel.send({ type: 'broadcast', event, payload })
-  supabase.removeChannel(channel)
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      supabase.removeChannel(channel)
+      reject(new Error('Broadcast subscribe timeout'))
+    }, 5000)
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        channel
+          .send({ type: 'broadcast', event, payload })
+          .then(() => {
+            clearTimeout(timeout)
+            supabase.removeChannel(channel)
+            resolve()
+          })
+          .catch((err) => {
+            clearTimeout(timeout)
+            supabase.removeChannel(channel)
+            reject(err)
+          })
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        clearTimeout(timeout)
+        supabase.removeChannel(channel)
+        reject(new Error(`Channel ${status}`))
+      }
+    })
+  }).catch(() => {
+    // Non-critical: don't fail the API request if broadcast fails
+  })
 }
