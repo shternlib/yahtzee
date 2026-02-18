@@ -17,15 +17,11 @@ export function ShareLink({ roomCode }: ShareLinkProps) {
 
   const handleCopy = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Dragon Dice', url: shareUrl })
-      } else {
-        await navigator.clipboard.writeText(shareUrl)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      }
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch {
-      // User cancelled share dialog
+      // Clipboard API not available
     }
   }
 
