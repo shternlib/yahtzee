@@ -51,6 +51,7 @@ export type GameAction =
   | { type: 'GAME_END'; payload: { scores: { playerIndex: number; grandTotal: number }[]; winner: number } }
   | { type: 'PLAYER_CONNECTED'; payload: { playerIndex: number } }
   | { type: 'PLAYER_DISCONNECTED'; payload: { playerIndex: number } }
+  | { type: 'SYNC_GAME_STATE'; payload: { currentTurnPlayerIndex: number; round: number; dice: number[]; rollCount: number; held: boolean[]; scorecards: Record<number, ScorecardData>; status: string; scores?: { playerIndex: number; grandTotal: number }[]; winner?: number } }
 
 export const initialGameState: GameState = {
   roomCode: '',
@@ -185,6 +186,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         winner: action.payload.winner,
         finalScores: action.payload.scores,
       }
+
+    case 'SYNC_GAME_STATE': {
+      const p = action.payload
+      if (p.status === 'finished' && p.scores) {
+        return {
+          ...state,
+          status: 'finished',
+          winner: p.winner ?? null,
+          finalScores: p.scores,
+          scorecards: p.scorecards,
+        }
+      }
+      return {
+        ...state,
+        status: p.status as GameState['status'],
+        round: p.round,
+        scorecards: p.scorecards,
+        currentTurn: {
+          playerIndex: p.currentTurnPlayerIndex,
+          dice: p.dice,
+          held: p.held,
+          rollCount: p.rollCount,
+        },
+        availableCategories: {},
+      }
+    }
 
     case 'PLAYER_CONNECTED':
       return {

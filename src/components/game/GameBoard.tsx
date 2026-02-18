@@ -11,6 +11,7 @@ import { TurnIndicator } from './TurnIndicator'
 import type { Category } from '@/lib/yahtzee/categories'
 
 const DISCONNECT_SKIP_TIMEOUT = 30_000
+const GAME_POLL_INTERVAL = 2000
 
 interface BotTurn {
   playerIndex: number
@@ -33,6 +34,76 @@ export function GameBoard() {
 
   const isMyTurn = !botAnimating && state.myPlayerIndex === state.currentTurn.playerIndex
   const isSoloVsBots = state.players.filter(p => !p.isBot).length <= 1
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Poll game state when waiting for opponent
+  useEffect(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+
+    // Only poll when it's not my turn and not animating bots
+    if (isMyTurn || botAnimating || !state.roomCode || isSoloVsBots) return
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/rooms/${state.roomCode}`)
+        if (!res.ok) return
+        const data = await res.json()
+
+        if (data.status === 'finished') {
+          // Game ended by opponent
+          if (data.gameState?.scorecards) {
+            dispatch({
+              type: 'SYNC_GAME_STATE',
+              payload: {
+                currentTurnPlayerIndex: data.currentTurnPlayerIndex ?? 0,
+                round: data.currentRound ?? state.round,
+                dice: [0, 0, 0, 0, 0],
+                rollCount: 0,
+                held: [false, false, false, false, false],
+                scorecards: data.gameState.scorecards,
+                status: 'finished',
+              },
+            })
+          }
+          return
+        }
+
+        if (!data.gameState) return
+
+        // Check if state changed (different turn or round)
+        const serverTurn = data.currentTurnPlayerIndex
+        const serverRound = data.currentRound
+        if (
+          serverTurn !== state.currentTurn.playerIndex ||
+          serverRound !== state.round ||
+          data.gameState.rollCount !== state.currentTurn.rollCount
+        ) {
+          dispatch({
+            type: 'SYNC_GAME_STATE',
+            payload: {
+              currentTurnPlayerIndex: serverTurn,
+              round: serverRound,
+              dice: data.gameState.dice,
+              rollCount: data.gameState.rollCount,
+              held: data.gameState.held,
+              scorecards: data.gameState.scorecards,
+              status: data.status,
+            },
+          })
+        }
+      } catch {
+        // Ignore network errors
+      }
+    }
+
+    pollRef.current = setInterval(poll, GAME_POLL_INTERVAL)
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
+  }, [isMyTurn, botAnimating, state.roomCode, state.currentTurn.playerIndex, state.currentTurn.rollCount, state.round, isSoloVsBots, dispatch])
 
   const categoryNames: Record<string, string> = {
     ones: tScore('ones'), twos: tScore('twos'), threes: tScore('threes'),
