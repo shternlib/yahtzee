@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { storeSessionId, storePlayerName, getStoredPlayerName } from '@/lib/utils/session'
+import { RulesModal } from '@/components/game/RulesModal'
 import Image from 'next/image'
 
 export default function HomePage() {
@@ -14,6 +15,8 @@ export default function HomePage() {
   const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showRules, setShowRules] = useState(false)
+  const tRules = useTranslations('rules')
 
   useEffect(() => {
     const stored = getStoredPlayerName()
@@ -158,6 +161,19 @@ export default function HomePage() {
           </button>
         </div>
       </div>
+
+      <button
+        onClick={() => setShowRules(true)}
+        className="w-full max-w-sm py-4 bg-dragon-card border border-dragon-purple/30 rounded-2xl text-lg font-semibold text-dragon-muted flex items-center justify-center gap-2 active:bg-dragon-card-light transition-colors"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        {tRules('title')}
+      </button>
+      <RulesModal open={showRules} onClose={() => setShowRules(false)} />
 
       {error && (
         <p className="text-red-400 text-sm">{error}</p>
