@@ -91,7 +91,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col items-center gap-6 px-6 py-8 min-h-dvh">
-      <div className="absolute top-4 right-4">
+      <div className="absolute safe-top right-4">
         <LanguageToggle />
       </div>
 
