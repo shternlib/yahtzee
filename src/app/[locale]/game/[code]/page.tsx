@@ -164,7 +164,7 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
 
   return (
     <div className="relative pt-16">
-      <div className="fixed top-3 left-3 z-10">
+      <div className="fixed top-3 right-3 z-10 flex items-center gap-2">
         <button
           onClick={() => setShowRules(true)}
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-dragon-card border border-dragon-purple/30 text-dragon-muted active:bg-dragon-card-light transition-colors"
@@ -176,12 +176,10 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         </button>
-      </div>
-      <div className="fixed top-3 right-3 z-10">
         <LanguageToggle />
       </div>
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
-      {state.status === 'lobby' && <LobbyView onShowRules={() => setShowRules(true)} />}
+      {state.status === 'lobby' && <LobbyView />}
       {state.status === 'playing' && <GameBoard />}
       {state.status === 'finished' && <ResultsView />}
     </div>
