@@ -7,7 +7,8 @@
     "joinByCode": "Войти по коду",
     "codePlaceholder": "Код комнаты",
     "join": "Войти",
-    "playWithBots": "Играть с ботами"
+    "playWithBots": "Играть с ботами",
+    "localGame": "Оффлайн-игра"
   },
   "lobby": {
     "title": "Лобби",
@@ -70,6 +71,25 @@
     "finalScores": "Финальные очки",
     "playAgain": "Играть снова",
     "backToHome": "На главную"
+  },
+  "local": {
+    "title": "Оффлайн-игра",
+    "subtitle": "Передавайте телефон и играйте с настоящими кубиками!",
+    "playerPlaceholder": "Имя игрока",
+    "addPlayer": "Добавить игрока",
+    "startGame": "Начать игру",
+    "needMorePlayers": "Нужно минимум 2 игрока",
+    "maxPlayers": "Максимум 6 игроков",
+    "turnOf": "Ход: {name}",
+    "roundInfo": "Раунд {round} из 13",
+    "setAllDice": "Нажимайте на кубики для ввода значений",
+    "clearDice": "Сброс",
+    "endGame": "Завершить",
+    "confirmEnd": "Завершить игру досрочно?",
+    "confirm": "Да",
+    "cancel": "Отмена",
+    "playAgain": "Играть снова",
+    "newGame": "Новая игра"
   },
   "rules": {
     "title": "Правила Dragon Dice",

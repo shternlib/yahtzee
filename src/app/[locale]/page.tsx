@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { useRouter, Link } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { storeSessionId, storePlayerName, getStoredPlayerName } from '@/lib/utils/session'
 import { RulesModal } from '@/components/game/RulesModal'
@@ -140,6 +140,13 @@ export default function HomePage() {
           {t('playWithBots')}
         </button>
       </div>
+
+      <Link
+        href="/local"
+        className="w-full max-w-sm py-3 bg-dragon-green text-white rounded-2xl font-semibold text-center active:bg-dragon-green/80 transition-colors block"
+      >
+        {t('localGame')}
+      </Link>
 
       <div className="w-full max-w-sm border-t border-dragon-purple/30 pt-5">
         <p className="text-sm text-dragon-muted mb-3 text-center">{t('joinByCode')}</p>

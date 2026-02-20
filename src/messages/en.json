@@ -7,7 +7,8 @@
     "joinByCode": "Join by Code",
     "codePlaceholder": "Room code",
     "join": "Join",
-    "playWithBots": "Play with Bots"
+    "playWithBots": "Play with Bots",
+    "localGame": "Local Game"
   },
   "lobby": {
     "title": "Game Lobby",
@@ -70,6 +71,25 @@
     "finalScores": "Final Scores",
     "playAgain": "Play Again",
     "backToHome": "Back to Home"
+  },
+  "local": {
+    "title": "Local Game",
+    "subtitle": "Pass the phone and play with real dice!",
+    "playerPlaceholder": "Player name",
+    "addPlayer": "Add Player",
+    "startGame": "Start Game",
+    "needMorePlayers": "Need at least 2 players",
+    "maxPlayers": "Maximum 6 players",
+    "turnOf": "{name}'s turn",
+    "roundInfo": "Round {round} of 13",
+    "setAllDice": "Tap dice to set values",
+    "clearDice": "Clear",
+    "endGame": "End Game",
+    "confirmEnd": "End the game early?",
+    "confirm": "Yes",
+    "cancel": "Cancel",
+    "playAgain": "Play Again",
+    "newGame": "New Game"
   },
   "rules": {
     "title": "Dragon Dice Rules",
