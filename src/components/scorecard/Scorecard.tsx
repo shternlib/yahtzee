@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 import type { Category, ScorecardData } from '@/lib/yahtzee/categories'
 import { UPPER_CATEGORIES, LOWER_CATEGORIES } from '@/lib/yahtzee/categories'
 import { calculateTotals } from '@/lib/yahtzee/scoring'
@@ -137,6 +138,14 @@ export function Scorecard({
       )}
 
       {/* Scorecard */}
+      <div className="relative">
+        <Image
+          src="/gavrik_liderboard.png"
+          alt=""
+          width={110}
+          height={90}
+          className="absolute -top-14 right-2 z-10 pointer-events-none drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+        />
       <div className="flex flex-col gap-1 p-3 bg-dragon-card/60 rounded-2xl border border-dragon-purple/20">
         <h3 className="text-xs font-semibold text-dragon-muted uppercase tracking-wider px-2 mb-1">
           {t('upperSection')}
@@ -168,6 +177,7 @@ export function Scorecard({
           <span>{t('grandTotal')}</span>
           <span className="font-mono text-lg">{viewedTotals.grandTotal}</span>
         </div>
+      </div>
       </div>
     </div>
   )
