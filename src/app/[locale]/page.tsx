@@ -101,10 +101,10 @@ export default function HomePage() {
       {/* Dragon mascot + title */}
       <div className="flex flex-col items-center mt-4">
         <Image
-          src="/dragon-bg.png"
+          src="/gavrik_dragon_dice.png"
           alt="Dragon mascot"
           width={140}
-          height={140}
+          height={149}
           priority
           className="drop-shadow-[0_4px_24px_rgba(246,130,35,0.4)] animate-float"
         />
