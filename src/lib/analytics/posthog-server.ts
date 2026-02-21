@@ -1,32 +1,28 @@
-import { PostHog } from 'posthog-node'
+const POSTHOG_HOST = 'https://us.i.posthog.com'
 
-let posthogClient: PostHog | null = null
-
-function getPostHog(): PostHog | null {
-  const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
-  if (!apiKey) return null
-
-  if (!posthogClient) {
-    posthogClient = new PostHog(apiKey, {
-      host: 'https://us.i.posthog.com',
-      flushAt: 1,
-      flushInterval: 0,
-    })
-  }
-  return posthogClient
-}
-
-/** Server-side event tracking. Awaits flush so events survive serverless shutdown. */
+/** Server-side event tracking via direct HTTP. Works reliably in Vercel serverless. */
 export async function trackServerEvent(
   distinctId: string,
   event: string,
   properties?: Record<string, unknown>
 ) {
+  const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
+  if (!apiKey) return
+
   try {
-    const ph = getPostHog()
-    if (!ph) return
-    ph.capture({ distinctId, event, properties })
-    await ph.flush()
+    await fetch(`${POSTHOG_HOST}/capture/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        event,
+        distinct_id: distinctId,
+        properties: {
+          ...properties,
+          $lib: 'dragon-dice-server',
+        },
+      }),
+    })
   } catch {
     // Analytics must never break game logic
   }
