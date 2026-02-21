@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
-import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES, type Category } from '@/lib/yahtzee/categories'
+import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES } from '@/lib/yahtzee/categories'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 import { calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
 import { loadRoomState, saveRoomState } from '../roll/route'
 
@@ -136,6 +137,12 @@ export async function POST(
   state.rollCount = 0
   state.held = [false, false, false, false, false]
   await saveRoomState(room.id, state)
+
+  trackServerEvent(sessionId || 'anonymous', 'turn_skipped', {
+    room_code: code.toUpperCase(),
+    round: room.current_round,
+    category: unfilledCategory,
+  })
 
   return NextResponse.json({
     skipped: true,

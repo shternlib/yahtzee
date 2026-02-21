@@ -6,6 +6,7 @@ import { calculateScore, calculateAvailableScores, calculateTotals, isScorecardC
 import { chooseCategory, chooseDiceToHold, shouldReroll } from '@/lib/yahtzee/bot'
 import { generateDice, rollDice } from '@/lib/yahtzee/dice'
 import { loadRoomState, saveRoomState, type RoomDiceState } from '../roll/route'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 interface BotTurnResult {
   playerIndex: number
@@ -73,6 +74,15 @@ export async function POST(
   scorecard[category as Category] = score
   state.scorecards[playerIndex] = scorecard
 
+  trackServerEvent(sessionId || 'anonymous', 'category_scored', {
+    room_code: code.toUpperCase(),
+    category,
+    score,
+    is_zero: score === 0,
+    is_bot: false,
+    roll_count: state.rollCount,
+  })
+
   // Get all players
   const { data: players } = await supabase
     .from('players')
@@ -95,7 +105,7 @@ export async function POST(
   let gameFinished = allComplete || nextRound > TOTAL_ROUNDS
 
   if (gameFinished) {
-    return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score)
+    return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score, undefined, room.started_at)
   }
 
   // Execute bot turns synchronously
@@ -117,7 +127,7 @@ export async function POST(
     gameFinished = allDone || afterBotRound > TOTAL_ROUNDS
 
     if (gameFinished) {
-      return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score, botTurns)
+      return await finishGame(supabase, room.id, code.toUpperCase(), state, players || [], score, botTurns, room.started_at)
     }
 
     nextPlayerIndex = afterBotIndex
@@ -188,9 +198,10 @@ async function finishGame(
   roomId: string,
   roomCode: string,
   state: RoomDiceState,
-  players: { id: string; player_index: number }[],
+  players: { id: string; player_index: number; is_bot: boolean }[],
   humanScore: number,
-  botTurns?: BotTurnResult[]
+  botTurns?: BotTurnResult[],
+  startedAt?: string | null
 ) {
   for (const p of players) {
     const sc = state.scorecards[p.player_index]
@@ -227,6 +238,22 @@ async function finishGame(
 
   const finalScores = scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total }))
   const winner = scores[0]?.playerIndex
+
+  const botCount = players.filter(p => p.is_bot).length
+  const durationSec = startedAt
+    ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000)
+    : 0
+  const winnerIsBot = players.find(p => p.player_index === winner)?.is_bot ?? false
+
+  trackServerEvent('game-system', 'game_finished', {
+    room_code: roomCode,
+    duration_sec: durationSec,
+    player_count: players.length,
+    bot_count: botCount,
+    winner_is_bot: winnerIsBot,
+    winner_score: scores[0]?.total ?? 0,
+    scores: finalScores,
+  })
 
   // Broadcast game end to all players
   await broadcastToRoom(roomCode, 'game_end', { scores: finalScores, winner })

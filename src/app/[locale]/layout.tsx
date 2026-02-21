@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { GameProvider } from '@/context/GameContext'
+import { PostHogBootstrap } from '@/app/posthog-provider'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -45,11 +46,13 @@ export default async function LocaleLayout({
       </head>
       <body className="bg-dragon-bg text-dragon-text antialiased">
         <NextIntlClientProvider messages={messages}>
-          <GameProvider>
-            <main className="min-h-dvh max-w-lg mx-auto">
-              {children}
-            </main>
-          </GameProvider>
+          <PostHogBootstrap>
+            <GameProvider>
+              <main className="min-h-dvh max-w-lg mx-auto">
+                {children}
+              </main>
+            </GameProvider>
+          </PostHogBootstrap>
         </NextIntlClientProvider>
       </body>
     </html>

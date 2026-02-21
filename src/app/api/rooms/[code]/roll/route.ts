@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import { generateDice, rollDice } from '@/lib/yahtzee/dice'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 import { calculateAvailableScores } from '@/lib/yahtzee/scoring'
 import { createEmptyScorecard, type ScorecardData } from '@/lib/yahtzee/categories'
 
@@ -116,6 +117,11 @@ export async function POST(
     dice: newDice,
     rollCount: state.rollCount,
     availableCategories,
+  })
+
+  trackServerEvent(sessionId || 'anonymous', 'dice_rolled', {
+    room_code: code.toUpperCase(),
+    roll_number: state.rollCount,
   })
 
   return NextResponse.json({

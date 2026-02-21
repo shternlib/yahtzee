@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 export async function POST(
   request: NextRequest,
@@ -110,6 +111,12 @@ export async function POST(
     .select('*')
     .eq('room_id', room.id)
     .order('player_index')
+
+  trackServerEvent(finalSessionId, 'player_joined', {
+    room_code: code.toUpperCase(),
+    player_count: (updatedPlayers || []).length,
+    is_rejoin: false,
+  })
 
   return NextResponse.json({
     roomId: room.id,

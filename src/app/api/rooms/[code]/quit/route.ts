@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 import { createEmptyScorecard } from '@/lib/yahtzee/categories'
 import { calculateTotals } from '@/lib/yahtzee/scoring'
 import { loadRoomState } from '../roll/route'
@@ -95,6 +96,26 @@ export async function POST(
       game_state: null,
     }).eq('id', room.id)
 
+    const durationSec = room.started_at
+      ? Math.round((Date.now() - new Date(room.started_at).getTime()) / 1000)
+      : 0
+
+    trackServerEvent(sessionId, 'game_abandoned', {
+      room_code: code.toUpperCase(),
+      round: room.current_round,
+      reason: 'quit',
+    })
+
+    trackServerEvent('game-system', 'game_finished', {
+      room_code: code.toUpperCase(),
+      duration_sec: durationSec,
+      player_count: players.length,
+      bot_count: players.filter(p => p.is_bot).length,
+      winner_is_bot: players.find(p => p.player_index === scores[0]?.playerIndex)?.is_bot ?? false,
+      winner_score: scores[0]?.total ?? 0,
+      early_end: true,
+    })
+
     return NextResponse.json({
       action: 'finished',
       scores: scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total })),
@@ -106,6 +127,12 @@ export async function POST(
   await supabase.from('players')
     .update({ is_connected: false })
     .eq('id', player.id)
+
+  trackServerEvent(sessionId, 'game_abandoned', {
+    room_code: code.toUpperCase(),
+    round: room.current_round,
+    reason: 'leave',
+  })
 
   return NextResponse.json({ action: 'left' })
 }

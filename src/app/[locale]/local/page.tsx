@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducer, useState } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 import { useRouter } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 import { RulesModal } from '@/components/game/RulesModal'
@@ -9,11 +9,31 @@ import { LocalGameBoard } from '@/components/local/LocalGameBoard'
 import { LocalResults } from '@/components/local/LocalResults'
 import { localGameReducer, initialLocalGameState } from '@/lib/local/localGameReducer'
 import type { Category } from '@/lib/yahtzee/categories'
+import { trackEvent } from '@/lib/analytics/posthog-client'
 
 export default function LocalGamePage() {
   const [state, dispatch] = useReducer(localGameReducer, initialLocalGameState)
   const [showRules, setShowRules] = useState(false)
   const router = useRouter()
+  const prevStatus = useRef(state.status)
+
+  useEffect(() => {
+    if (prevStatus.current !== state.status) {
+      if (state.status === 'playing' && prevStatus.current === 'setup') {
+        trackEvent('local_game_started', { player_count: state.players.length })
+      }
+      if (state.status === 'finished') {
+        const winnerScore = state.winner !== null
+          ? state.finalScores.find(s => s.playerIndex === state.winner)?.grandTotal ?? 0
+          : 0
+        trackEvent('local_game_finished', {
+          player_count: state.players.length,
+          winner_score: winnerScore,
+        })
+      }
+      prevStatus.current = state.status
+    }
+  }, [state.status, state.players.length, state.finalScores, state.winner])
 
   if (state.status === 'setup') {
     return (
@@ -77,7 +97,10 @@ export default function LocalGamePage() {
         onTapDie={(index: number) => dispatch({ type: 'SET_DIE', payload: { dieIndex: index } })}
         onClearDice={() => dispatch({ type: 'CLEAR_DICE' })}
         onSelectCategory={(category: Category) => dispatch({ type: 'SELECT_CATEGORY', payload: { category } })}
-        onEndGame={() => dispatch({ type: 'END_GAME' })}
+        onEndGame={() => {
+          trackEvent('local_game_ended_early', { round: state.round, player_count: state.players.length })
+          dispatch({ type: 'END_GAME' })
+        }}
       />
     </div>
   )

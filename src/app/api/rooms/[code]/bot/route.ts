@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 export async function POST(
   request: NextRequest,
@@ -78,6 +79,11 @@ export async function POST(
       isBot: true,
       isConnected: true,
     },
+  })
+
+  trackServerEvent(sessionId || 'anonymous', 'bot_added', {
+    room_code: code.toUpperCase(),
+    player_count: (players || []).length + 1,
   })
 
   return NextResponse.json({

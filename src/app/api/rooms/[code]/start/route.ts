@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, broadcastToRoom } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 export async function POST(
   request: NextRequest,
@@ -62,6 +63,16 @@ export async function POST(
   await broadcastToRoom(code.toUpperCase(), 'game_start', {
     turnOrder,
     firstPlayer: 0,
+  })
+
+  const botCount = (players || []).filter(p => p.is_bot).length
+  const humanCount = (players || []).length - botCount
+
+  trackServerEvent(sessionId || 'anonymous', 'game_started', {
+    room_code: code.toUpperCase(),
+    player_count: (players || []).length,
+    bot_count: botCount,
+    human_count: humanCount,
   })
 
   return NextResponse.json({

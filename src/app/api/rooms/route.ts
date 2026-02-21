@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateRoomCode } from '@/lib/utils/room-code'
 import { errorResponse } from '@/lib/utils/errors'
+import { trackServerEvent } from '@/lib/analytics/posthog-server'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -60,6 +61,11 @@ export async function POST(request: NextRequest) {
   if (playerError) {
     return errorResponse('INTERNAL_ERROR', 'Failed to add host player', 500)
   }
+
+  trackServerEvent(sessionId, 'room_created', {
+    room_code: roomCode,
+    max_players: room.max_players,
+  })
 
   return NextResponse.json(
     {
