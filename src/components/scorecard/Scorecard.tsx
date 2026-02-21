@@ -85,7 +85,7 @@ export function Scorecard({
   return (
     <div className="flex flex-col gap-3">
       {/* Player tabs */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide p-1">
         {sortedPlayers.map((player) => {
           const total = calculateTotals(scorecards[player.playerIndex] || {} as ScorecardData).grandTotal
           const isTurn = player.playerIndex === currentTurnIndex
@@ -98,7 +98,7 @@ export function Scorecard({
               key={player.playerIndex}
               onClick={() => setViewingIndex(player.playerIndex)}
               className={`
-                flex flex-col items-center gap-0.5 min-w-[72px] px-3 py-2 rounded-xl transition-all
+                flex flex-col items-center gap-0.5 min-w-[72px] px-3 pt-2.5 pb-2 rounded-xl transition-all
                 ${isSelected ? 'bg-dragon-card-light scale-105' : 'bg-dragon-card/50 active:bg-dragon-card-light/50'}
                 ${isTurn && !isSelected ? 'ring-2 ring-dragon-orange/50' : ''}
               `}
