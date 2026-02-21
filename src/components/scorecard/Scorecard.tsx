@@ -98,9 +98,9 @@ export function Scorecard({
               key={player.playerIndex}
               onClick={() => setViewingIndex(player.playerIndex)}
               className={`
-                flex flex-col items-center gap-0.5 min-w-[72px] px-3 pt-2.5 pb-2 rounded-xl transition-all
+                flex flex-col items-center gap-0.5 min-w-[72px] px-3 pt-3 pb-2 rounded-xl transition-all
                 ${isSelected ? 'bg-dragon-card-light scale-105' : 'bg-dragon-card/50 active:bg-dragon-card-light/50'}
-                ${isTurn && !isSelected ? 'ring-2 ring-dragon-orange/50' : ''}
+                ${isTurn && !isSelected ? 'ring-2 ring-inset ring-dragon-orange/50' : ''}
               `}
             >
               <div className={`
