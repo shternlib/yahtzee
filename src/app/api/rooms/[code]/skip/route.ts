@@ -138,7 +138,7 @@ export async function POST(
   state.held = [false, false, false, false, false]
   await saveRoomState(room.id, state)
 
-  trackServerEvent(sessionId || 'anonymous', 'turn_skipped', {
+  await trackServerEvent(sessionId || 'anonymous', 'turn_skipped', {
     room_code: code.toUpperCase(),
     round: room.current_round,
     category: unfilledCategory,

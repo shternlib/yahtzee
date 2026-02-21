@@ -68,7 +68,7 @@ export async function POST(
   const botCount = (players || []).filter(p => p.is_bot).length
   const humanCount = (players || []).length - botCount
 
-  trackServerEvent(sessionId || 'anonymous', 'game_started', {
+  await trackServerEvent(sessionId || 'anonymous', 'game_started', {
     room_code: code.toUpperCase(),
     player_count: (players || []).length,
     bot_count: botCount,

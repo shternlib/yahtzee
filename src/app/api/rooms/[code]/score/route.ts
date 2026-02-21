@@ -74,7 +74,7 @@ export async function POST(
   scorecard[category as Category] = score
   state.scorecards[playerIndex] = scorecard
 
-  trackServerEvent(sessionId || 'anonymous', 'category_scored', {
+  await trackServerEvent(sessionId || 'anonymous', 'category_scored', {
     room_code: code.toUpperCase(),
     category,
     score,
@@ -245,7 +245,7 @@ async function finishGame(
     : 0
   const winnerIsBot = players.find(p => p.player_index === winner)?.is_bot ?? false
 
-  trackServerEvent('game-system', 'game_finished', {
+  await trackServerEvent('game-system', 'game_finished', {
     room_code: roomCode,
     duration_sec: durationSec,
     player_count: players.length,

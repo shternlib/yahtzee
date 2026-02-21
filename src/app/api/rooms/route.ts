@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     return errorResponse('INTERNAL_ERROR', 'Failed to add host player', 500)
   }
 
-  trackServerEvent(sessionId, 'room_created', {
+  await trackServerEvent(sessionId, 'room_created', {
     room_code: roomCode,
     max_players: room.max_players,
   })

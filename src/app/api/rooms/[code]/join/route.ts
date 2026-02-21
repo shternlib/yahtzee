@@ -112,7 +112,7 @@ export async function POST(
     .eq('room_id', room.id)
     .order('player_index')
 
-  trackServerEvent(finalSessionId, 'player_joined', {
+  await trackServerEvent(finalSessionId, 'player_joined', {
     room_code: code.toUpperCase(),
     player_count: (updatedPlayers || []).length,
     is_rejoin: false,

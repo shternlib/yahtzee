@@ -16,8 +16,8 @@ function getPostHog(): PostHog | null {
   return posthogClient
 }
 
-/** Fire-and-forget server-side event. Never throws, never blocks. */
-export function trackServerEvent(
+/** Server-side event tracking. Awaits flush so events survive serverless shutdown. */
+export async function trackServerEvent(
   distinctId: string,
   event: string,
   properties?: Record<string, unknown>
@@ -26,6 +26,7 @@ export function trackServerEvent(
     const ph = getPostHog()
     if (!ph) return
     ph.capture({ distinctId, event, properties })
+    await ph.flush()
   } catch {
     // Analytics must never break game logic
   }

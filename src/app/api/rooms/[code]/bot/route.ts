@@ -81,7 +81,7 @@ export async function POST(
     },
   })
 
-  trackServerEvent(sessionId || 'anonymous', 'bot_added', {
+  await trackServerEvent(sessionId || 'anonymous', 'bot_added', {
     room_code: code.toUpperCase(),
     player_count: (players || []).length + 1,
   })

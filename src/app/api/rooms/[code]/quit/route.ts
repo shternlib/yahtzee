@@ -100,13 +100,13 @@ export async function POST(
       ? Math.round((Date.now() - new Date(room.started_at).getTime()) / 1000)
       : 0
 
-    trackServerEvent(sessionId, 'game_abandoned', {
+    await trackServerEvent(sessionId, 'game_abandoned', {
       room_code: code.toUpperCase(),
       round: room.current_round,
       reason: 'quit',
     })
 
-    trackServerEvent('game-system', 'game_finished', {
+    await trackServerEvent('game-system', 'game_finished', {
       room_code: code.toUpperCase(),
       duration_sec: durationSec,
       player_count: players.length,
@@ -128,7 +128,7 @@ export async function POST(
     .update({ is_connected: false })
     .eq('id', player.id)
 
-  trackServerEvent(sessionId, 'game_abandoned', {
+  await trackServerEvent(sessionId, 'game_abandoned', {
     room_code: code.toUpperCase(),
     round: room.current_round,
     reason: 'leave',

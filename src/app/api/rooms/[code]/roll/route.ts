@@ -119,7 +119,7 @@ export async function POST(
     availableCategories,
   })
 
-  trackServerEvent(sessionId || 'anonymous', 'dice_rolled', {
+  await trackServerEvent(sessionId || 'anonymous', 'dice_rolled', {
     room_code: code.toUpperCase(),
     roll_number: state.rollCount,
   })
