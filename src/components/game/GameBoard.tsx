@@ -20,7 +20,7 @@ interface BotTurn {
   score: number
 }
 
-export function GameBoard() {
+export function GameBoard({ onShowRules }: { onShowRules: () => void }) {
   const { state, dispatch } = useGame()
   const router = useRouter()
   const [rolling, setRolling] = useState(false)
@@ -351,6 +351,7 @@ export function GameBoard() {
         players={state.players}
         round={state.round}
         isMyTurn={isMyTurn}
+        onShowRules={onShowRules}
       />
 
       {/* Quit confirmation modal */}
