@@ -68,7 +68,7 @@ export function LobbyView() {
 
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-400">
-          {t('players')} ({state.players.length} {t('of')} 4)
+          {t('players')} ({state.players.length})
         </p>
         {state.players.map((player) => (
           <div

@@ -116,15 +116,30 @@ export function useGameChannel(roomCode: string | null) {
         })
       })
       .on('broadcast', { event: 'game_end' }, ({ payload }) => {
+        const currentState = stateRef.current
+        if (currentState.status !== 'playing') {
+          syncWithServer()
+          return
+        }
         dispatch({
           type: 'GAME_END',
           payload: { scores: payload.scores, winner: payload.winner },
         })
       })
       .on('broadcast', { event: 'player_joined' }, ({ payload }) => {
+        const currentState = stateRef.current
+        if (currentState.status !== 'lobby') {
+          syncWithServer()
+          return
+        }
         dispatch({ type: 'PLAYER_JOINED', payload: payload.player })
       })
       .on('broadcast', { event: 'player_left' }, ({ payload }) => {
+        const currentState = stateRef.current
+        if (currentState.status !== 'lobby') {
+          syncWithServer()
+          return
+        }
         dispatch({ type: 'PLAYER_LEFT', payload: { playerIndex: payload.playerIndex } })
       })
       .subscribe()

@@ -21,7 +21,11 @@ export class RateLimiter {
 
   constructor(private config: RateLimitConfig) {
     this.windows = new Map()
-    this.cleanupTimer = setInterval(() => this.cleanup(), 60_000)
+    const timer = setInterval(() => this.cleanup(), 60_000)
+    if (typeof timer === 'object' && 'unref' in timer) {
+      timer.unref()
+    }
+    this.cleanupTimer = timer
   }
 
   check(key: string): RateLimitResult {

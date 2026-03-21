@@ -9,16 +9,3 @@ export function createGameChannel(roomCode: string): RealtimeChannel {
     },
   })
 }
-
-/** Broadcast an event to all players in the room */
-export async function broadcastEvent(
-  channel: RealtimeChannel,
-  event: string,
-  payload: Record<string, unknown>
-) {
-  await channel.send({
-    type: 'broadcast',
-    event,
-    payload,
-  })
-}

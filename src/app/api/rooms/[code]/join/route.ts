@@ -76,11 +76,11 @@ export async function POST(
   let playerIndex = 0
   while (usedIndices.has(playerIndex)) playerIndex++
 
-  // Use provided sessionId or create anonymous session
-  let finalSessionId = sessionId
+  // Always create a new anonymous session for new players (never trust client-provided sessionId)
+  const { data: authData } = await supabase.auth.signInAnonymously()
+  const finalSessionId = authData.session?.user.id
   if (!finalSessionId) {
-    const { data: authData } = await supabase.auth.signInAnonymously()
-    finalSessionId = authData.session?.user.id
+    return errorResponse('INTERNAL_ERROR', 'Failed to create session', 500)
   }
 
   // Add player

@@ -72,16 +72,14 @@ export default function middleware(request: NextRequest) {
     const start = Date.now()
     const method = request.method
 
-    // Log after response is determined (use queueMicrotask to capture duration)
-    const logRequest = (status: number) => {
+    const logRequest = () => {
       const duration = Date.now() - start
-      logger.info('API request', { method, path: pathname, status, duration })
+      logger.info('API request', { method, path: pathname, duration })
     }
 
-    // Wrap the response pipeline to capture status
     const originalNext = () => {
       const response = NextResponse.next()
-      logRequest(response.status)
+      logRequest()
       return response
     }
 
@@ -109,12 +107,12 @@ export default function middleware(request: NextRequest) {
           },
           { status: 429 }
         )
-        logRequest(429)
+        logRequest()
         return addRateLimitHeaders(response, result)
       }
 
       const response = NextResponse.next()
-      logRequest(200)
+      logRequest()
       return addRateLimitHeaders(response, result)
     }
 

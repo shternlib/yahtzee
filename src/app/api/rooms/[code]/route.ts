@@ -3,11 +3,15 @@ import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params
   const supabase = createServerClient()
+
+  // Accept sessionId from query params for caller identification
+  const url = new URL(request.url)
+  const callerSessionId = url.searchParams.get('sessionId')
 
   const { data: room } = await supabase
     .from('game_rooms')
@@ -32,12 +36,14 @@ export async function GET(
     maxPlayers: room.max_players,
     currentRound: room.current_round,
     currentTurnPlayerIndex: room.current_turn_player_index,
+    isHost: callerSessionId ? room.host_session_id === callerSessionId : false,
     players: (players || []).map((p) => ({
       id: p.id,
       displayName: p.display_name,
       playerIndex: p.player_index,
       isBot: p.is_bot,
       isConnected: p.is_connected,
+      isMe: callerSessionId ? p.session_id === callerSessionId : false,
     })),
   })
 }

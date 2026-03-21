@@ -6,7 +6,7 @@ import { isCategory, type Category, TOTAL_ROUNDS, createEmptyScorecard } from '@
 import { calculateScore, calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
 import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
-import { loadRoomState, saveRoomState, clearRoomState, createInitialState } from '@/lib/yahtzee/gameState'
+import { loadRoomState, saveRoomState, createInitialState } from '@/lib/yahtzee/gameState'
 
 export async function POST(
   request: NextRequest,

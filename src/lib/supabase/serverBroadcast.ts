@@ -1,4 +1,5 @@
 import { createServerClient } from './server'
+import logger from '@/lib/utils/logger'
 
 /** Broadcast an event to all players in a room from the server side */
 export async function serverBroadcast(
@@ -11,12 +12,21 @@ export async function serverBroadcast(
     config: { broadcast: { self: true } },
   })
 
-  await new Promise<void>((resolve, reject) => {
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') resolve()
-      if (status === 'CHANNEL_ERROR') reject(new Error('Channel subscription failed'))
-    })
-  })
+  // Subscribe with timeout to prevent hanging
+  await Promise.race([
+    new Promise<void>((resolve, reject) => {
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') resolve()
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          reject(new Error(`Channel subscription failed: ${status}`))
+        }
+      })
+    }),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Channel subscription timed out')), 5000)
+    ),
+  ])
+
   await channel.send({ type: 'broadcast', event, payload })
   await channel.unsubscribe()
 }

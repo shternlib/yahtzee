@@ -9,7 +9,7 @@ import { LobbyView } from '@/components/lobby/LobbyView'
 import { GameBoard } from '@/components/game/GameBoard'
 import { ResultsView } from '@/components/results/ResultsView'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
-import { getStoredSessionId, getStoredPlayerName, storeSessionId } from '@/lib/utils/session'
+import { getStoredSessionId, getStoredPlayerName, storeSessionId, storePlayerName } from '@/lib/utils/session'
 
 export default function GamePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params)
@@ -31,7 +31,11 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
 
     async function loadRoom() {
       try {
-        const res = await fetch(`/api/rooms/${roomCode}`)
+        const sessionId = getStoredSessionId()
+        const url = sessionId
+          ? `/api/rooms/${roomCode}?sessionId=${encodeURIComponent(sessionId)}`
+          : `/api/rooms/${roomCode}`
+        const res = await fetch(url)
         const data = await res.json()
 
         if (cancelled) return
@@ -42,9 +46,8 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
           return
         }
 
-        const sessionId = getStoredSessionId()
         const existingPlayer = data.players.find(
-          (p: { sessionId: string }) => p.sessionId === sessionId
+          (p: { isMe: boolean }) => p.isMe
         )
 
         dispatch({
@@ -52,17 +55,17 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
           payload: {
             roomCode: data.roomCode,
             roomId: data.roomId,
-            hostSessionId: data.hostSessionId,
+            hostSessionId: data.isHost ? (sessionId || '') : '',
             players: data.players,
             status: data.status,
           },
         })
 
-        if (existingPlayer) {
+        if (existingPlayer && sessionId) {
           dispatch({
             type: 'SET_MY_SESSION',
             payload: {
-              sessionId: sessionId!,
+              sessionId,
               playerIndex: existingPlayer.playerIndex,
             },
           })
@@ -98,13 +101,13 @@ export default function GamePage({ params }: { params: Promise<{ code: string }>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerName: name,
-          sessionId: getStoredSessionId(),
         }),
       })
       const data = await res.json()
 
       if (res.ok) {
         storeSessionId(data.sessionId)
+        storePlayerName(name)
         dispatch({
           type: 'SET_MY_SESSION',
           payload: {

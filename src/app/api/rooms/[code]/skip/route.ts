@@ -49,6 +49,11 @@ export async function POST(
     return errorResponse('NOT_IN_GAME', 'You are not in this game', 403)
   }
 
+  // Only the host can skip turns
+  if (room.host_session_id !== sessionId) {
+    return errorResponse('NOT_HOST', 'Only the host can skip turns', 403)
+  }
+
   const playerIndex = room.current_turn_player_index
 
   let state = await loadRoomState(supabase, room.id)

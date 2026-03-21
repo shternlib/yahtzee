@@ -13,12 +13,13 @@ export async function loadRoomState(
   supabase: SupabaseClient,
   roomId: string
 ): Promise<RoomGameState | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('game_rooms')
     .select('game_state')
     .eq('id', roomId)
     .single()
 
+  if (error) throw new Error(`Failed to load game state: ${error.message}`)
   if (!data?.game_state) return null
   return data.game_state as RoomGameState
 }
@@ -29,21 +30,12 @@ export async function saveRoomState(
   roomId: string,
   state: RoomGameState
 ): Promise<void> {
-  await supabase
+  const { error } = await supabase
     .from('game_rooms')
     .update({ game_state: state })
     .eq('id', roomId)
-}
 
-/** Clear game state (on game end) */
-export async function clearRoomState(
-  supabase: SupabaseClient,
-  roomId: string
-): Promise<void> {
-  await supabase
-    .from('game_rooms')
-    .update({ game_state: null })
-    .eq('id', roomId)
+  if (error) throw new Error(`Failed to save game state: ${error.message}`)
 }
 
 /** Initialize game state for a room with given player indices */
