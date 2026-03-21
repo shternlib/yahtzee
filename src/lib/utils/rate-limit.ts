@@ -17,19 +17,22 @@ export interface RateLimitResult {
 
 export class RateLimiter {
   private windows: Map<string, WindowEntry>
-  private cleanupTimer: ReturnType<typeof setInterval>
+  private lastCleanup: number
 
   constructor(private config: RateLimitConfig) {
     this.windows = new Map()
-    const timer = setInterval(() => this.cleanup(), 60_000)
-    if (typeof timer === 'object' && 'unref' in timer) {
-      timer.unref()
-    }
-    this.cleanupTimer = timer
+    this.lastCleanup = Date.now()
   }
 
   check(key: string): RateLimitResult {
     const now = Date.now()
+
+    // Lazy cleanup — no setInterval needed (edge-runtime safe)
+    if (now - this.lastCleanup > 60_000) {
+      this.cleanup(now)
+      this.lastCleanup = now
+    }
+
     const entry = this.windows.get(key)
 
     if (!entry || now >= entry.resetAt) {
@@ -53,18 +56,12 @@ export class RateLimiter {
     }
   }
 
-  private cleanup() {
-    const now = Date.now()
+  private cleanup(now: number) {
     for (const [key, entry] of this.windows) {
       if (now >= entry.resetAt) {
         this.windows.delete(key)
       }
     }
-  }
-
-  destroy() {
-    clearInterval(this.cleanupTimer)
-    this.windows.clear()
   }
 }
 

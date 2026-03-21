@@ -20,19 +20,26 @@ export default function HomePage() {
   const [error, setError] = useState('')
 
   const safeFetch = async (url: string, options?: RequestInit) => {
-    const res = await fetch(url, options)
-    if (!res.ok) {
-      const text = await res.text()
-      try {
-        const data = JSON.parse(text)
-        throw new Error(data.error?.message || `Server error ${res.status}`)
-      } catch (e) {
-        if (e instanceof Error && e.message !== text) throw e
-        throw new Error(`Server error ${res.status}`)
-      }
+    let res: Response
+    try {
+      res = await fetch(url, options)
+    } catch {
+      throw new Error(`Network error: cannot reach ${url}`)
     }
     const text = await res.text()
-    return text ? JSON.parse(text) : {}
+    if (!res.ok) {
+      let message = `Server error ${res.status}`
+      try {
+        const data = JSON.parse(text)
+        if (data.error?.message) message = data.error.message
+      } catch { /* not JSON, use default message */ }
+      throw new Error(message)
+    }
+    try {
+      return text ? JSON.parse(text) : {}
+    } catch {
+      throw new Error(`Invalid response from ${url}`)
+    }
   }
 
   const handleCreate = async () => {
