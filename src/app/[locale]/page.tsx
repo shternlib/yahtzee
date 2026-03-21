@@ -19,27 +19,38 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const safeFetch = async (url: string, options?: RequestInit) => {
+    const res = await fetch(url, options)
+    if (!res.ok) {
+      const text = await res.text()
+      try {
+        const data = JSON.parse(text)
+        throw new Error(data.error?.message || `Server error ${res.status}`)
+      } catch (e) {
+        if (e instanceof Error && e.message !== text) throw e
+        throw new Error(`Server error ${res.status}`)
+      }
+    }
+    const text = await res.text()
+    return text ? JSON.parse(text) : {}
+  }
+
   const handleCreate = async () => {
     if (!name.trim()) return
     setLoading(true)
     setError('')
 
     try {
-      const res = await fetch('/api/rooms', {
+      const data = await safeFetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hostName: name.trim() }),
       })
-      const data = await res.json()
-      if (res.ok) {
-        storeSessionId(data.sessionId)
-        storePlayerName(name.trim())
-        router.push(`/game/${data.roomCode}`)
-      } else {
-        setError(data.error?.message || 'Failed to create room')
-      }
-    } catch {
-      setError('Network error')
+      storeSessionId(data.sessionId)
+      storePlayerName(name.trim())
+      router.push(`/game/${data.roomCode}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setLoading(false)
     }
@@ -58,34 +69,32 @@ export default function HomePage() {
 
     try {
       // Create room
-      const res = await fetch('/api/rooms', {
+      const data = await safeFetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hostName: name.trim() }),
       })
-      const data = await res.json()
-      if (!res.ok) { setError(data.error?.message || 'Failed'); return }
 
       storeSessionId(data.sessionId)
       storePlayerName(name.trim())
 
       // Add a bot
-      await fetch(`/api/rooms/${data.roomCode}/bot`, {
+      await safeFetch(`/api/rooms/${data.roomCode}/bot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: data.sessionId }),
       })
 
       // Start game
-      await fetch(`/api/rooms/${data.roomCode}/start`, {
+      await safeFetch(`/api/rooms/${data.roomCode}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: data.sessionId }),
       })
 
       router.push(`/game/${data.roomCode}`)
-    } catch {
-      setError('Network error')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network error')
     } finally {
       setLoading(false)
     }
