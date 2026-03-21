@@ -32,14 +32,12 @@ export async function GET(
     maxPlayers: room.max_players,
     currentRound: room.current_round,
     currentTurnPlayerIndex: room.current_turn_player_index,
-    hostSessionId: room.host_session_id,
     players: (players || []).map((p) => ({
       id: p.id,
       displayName: p.display_name,
       playerIndex: p.player_index,
       isBot: p.is_bot,
       isConnected: p.is_connected,
-      sessionId: p.session_id,
     })),
   })
 }

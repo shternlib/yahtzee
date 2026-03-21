@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { generateRoomCode } from '@/lib/utils/room-code'
 import { errorResponse } from '@/lib/utils/errors'
+import { sanitizeDisplayName } from '@/lib/utils/sanitize'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -11,6 +12,8 @@ export async function POST(request: NextRequest) {
   if (!hostName || typeof hostName !== 'string' || hostName.trim().length === 0 || hostName.trim().length > 20) {
     return errorResponse('INVALID_NAME', 'Host name must be 1-20 characters', 400)
   }
+
+  const sanitizedName = sanitizeDisplayName(hostName)
 
   const supabase = createServerClient()
 
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
   const { error: playerError } = await supabase.from('players').insert({
     room_id: room.id,
     session_id: sessionId,
-    display_name: hostName.trim(),
+    display_name: sanitizedName,
     player_index: 0,
   })
 

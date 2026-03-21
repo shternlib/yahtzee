@@ -70,7 +70,7 @@ export function GameBoard() {
         skipTimerRef.current = null
       }
     }
-  }, [state.currentTurn.playerIndex, state.players, state.status, state.roomCode, state.mySessionId, state.hostSessionId, state.round, state.currentTurn, dispatch])
+  }, [state.currentTurn.playerIndex, state.players, state.status, state.roomCode, state.mySessionId, state.hostSessionId, state.round, dispatch])
 
   const handleRoll = useCallback(async () => {
     if (!isMyTurn || loading) return

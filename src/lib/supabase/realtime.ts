@@ -5,7 +5,7 @@ import { supabase } from './client'
 export function createGameChannel(roomCode: string): RealtimeChannel {
   return supabase.channel(`game:room:${roomCode}`, {
     config: {
-      broadcast: { self: true },
+      broadcast: { self: false },
     },
   })
 }

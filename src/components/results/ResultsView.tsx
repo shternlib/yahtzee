@@ -54,12 +54,6 @@ export function ResultsView() {
         >
           {t('playAgain')}
         </Link>
-        <Link
-          href="/"
-          className="w-full py-3 bg-gray-700 text-gray-200 rounded-xl text-center font-semibold active:bg-gray-600 transition-colors"
-        >
-          {t('backToHome')}
-        </Link>
       </div>
     </div>
   )

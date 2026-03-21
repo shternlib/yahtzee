@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
-import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES, type Category } from '@/lib/yahtzee/categories'
+import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES } from '@/lib/yahtzee/categories'
 import { calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
-import { getRoomState, setRoomState } from '../roll/route'
+import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
+import { loadRoomState, saveRoomState, createInitialState } from '@/lib/yahtzee/gameState'
 
 /** Skip a disconnected player's turn by scoring 0 in their lowest-value unfilled category */
 export async function POST(
@@ -32,34 +33,31 @@ export async function POST(
   }
 
   // Verify requester is a player in this game (but NOT the current turn player)
-  if (sessionId) {
-    const { data: requester } = await supabase
-      .from('players')
-      .select('*')
-      .eq('room_id', room.id)
-      .eq('session_id', sessionId)
-      .single()
+  if (!sessionId) {
+    return errorResponse('NOT_IN_GAME', 'Session ID is required', 401)
+  }
 
-    if (!requester) {
-      return errorResponse('NOT_IN_GAME', 'You are not in this game', 403)
-    }
+  const { data: requester } = await supabase
+    .from('players')
+    .select('*')
+    .eq('room_id', room.id)
+    .eq('session_id', sessionId)
+    .single()
+
+  if (!requester) {
+    return errorResponse('NOT_IN_GAME', 'You are not in this game', 403)
   }
 
   const playerIndex = room.current_turn_player_index
 
-  let state = getRoomState(room.id)
+  let state = await loadRoomState(supabase, room.id)
   if (!state) {
-    const { data: players } = await supabase
+    const { data: allPlayers } = await supabase
       .from('players')
       .select('player_index')
       .eq('room_id', room.id)
 
-    const scorecards: Record<number, import('@/lib/yahtzee/categories').ScorecardData> = {}
-    for (const p of players || []) {
-      scorecards[p.player_index] = createEmptyScorecard()
-    }
-    state = { dice: [0, 0, 0, 0, 0], rollCount: 0, held: [false, false, false, false, false], scorecards }
-    setRoomState(room.id, state)
+    state = createInitialState((allPlayers || []).map(p => p.player_index))
   }
 
   const scorecard = state.scorecards[playerIndex] || createEmptyScorecard()
@@ -81,9 +79,13 @@ export async function POST(
 
   const playerCount = (players || []).length
 
-  let nextPlayerIndex = (playerIndex + 1) % playerCount
+  // Advance to next player using actual player indices (handles non-contiguous indices)
+  const playerIndices = (players || []).map(p => p.player_index).sort((a, b) => a - b)
+  const currentPos = playerIndices.indexOf(playerIndex)
+  const nextPos = (currentPos + 1) % playerIndices.length
+  const nextPlayerIndex = playerIndices[nextPos]
   let nextRound = room.current_round
-  if (nextPlayerIndex <= playerIndex) {
+  if (nextPos === 0) {
     nextRound = room.current_round + 1
   }
 
@@ -118,8 +120,26 @@ export async function POST(
       await supabase.from('game_scores').update({ is_winner: true }).eq('room_id', room.id).eq('player_id', scores[0].playerId)
     }
 
-    await supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', room.id)
-    setRoomState(room.id, undefined as any)
+    await supabase.from('game_rooms').update({
+      status: 'finished',
+      finished_at: new Date().toISOString(),
+      game_state: null,
+    }).eq('id', room.id)
+
+    // Broadcast score update and game end
+    await serverBroadcast(code.toUpperCase(), 'score_update', {
+      playerIndex,
+      category: unfilledCategory,
+      score: 0,
+      nextPlayerIndex,
+      round: nextRound,
+      gameFinished: true,
+    })
+
+    await serverBroadcast(code.toUpperCase(), 'game_end', {
+      scores: scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total })),
+      winner: scores[0]?.playerIndex,
+    })
 
     return NextResponse.json({
       skipped: true,
@@ -130,15 +150,26 @@ export async function POST(
     })
   }
 
-  await supabase.from('game_rooms').update({
-    current_turn_player_index: nextPlayerIndex,
-    current_round: nextRound,
-  }).eq('id', room.id)
-
+  // Reset dice state for next turn and save atomically with turn update
   state.dice = [0, 0, 0, 0, 0]
   state.rollCount = 0
   state.held = [false, false, false, false, false]
-  setRoomState(room.id, state)
+
+  await supabase.from('game_rooms').update({
+    current_turn_player_index: nextPlayerIndex,
+    current_round: nextRound,
+    game_state: state,
+  }).eq('id', room.id)
+
+  // Broadcast score update (skip)
+  await serverBroadcast(code.toUpperCase(), 'score_update', {
+    playerIndex,
+    category: unfilledCategory,
+    score: 0,
+    nextPlayerIndex,
+    round: nextRound,
+    gameFinished: false,
+  })
 
   // Trigger bot turns if next player is a bot
   const nextPlayer = (players || []).find(p => p.player_index === nextPlayerIndex)

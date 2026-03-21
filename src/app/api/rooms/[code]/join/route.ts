@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
 import { errorResponse } from '@/lib/utils/errors'
+import { sanitizeDisplayName } from '@/lib/utils/sanitize'
 
 export async function POST(
   request: NextRequest,
@@ -60,8 +62,8 @@ export async function POST(
     }
   }
 
-  // Resolve duplicate names
-  let displayName = playerName.trim()
+  // Sanitize and resolve duplicate names
+  let displayName = sanitizeDisplayName(playerName)
   const existingNames = (players || []).map((p) => p.display_name)
   if (existingNames.includes(displayName)) {
     let counter = 2
@@ -94,8 +96,19 @@ export async function POST(
     .single()
 
   if (error) {
-    return errorResponse('INTERNAL_ERROR' as any, 'Failed to join room', 500)
+    return errorResponse('INTERNAL_ERROR', 'Failed to join room', 500)
   }
+
+  // Broadcast player joined
+  await serverBroadcast(code.toUpperCase(), 'player_joined', {
+    player: {
+      id: newPlayer.id,
+      displayName: newPlayer.display_name,
+      playerIndex: newPlayer.player_index,
+      isBot: false,
+      isConnected: true,
+    },
+  })
 
   // Fetch updated players list
   const { data: updatedPlayers } = await supabase

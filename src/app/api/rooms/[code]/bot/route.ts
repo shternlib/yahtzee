@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
 import { errorResponse } from '@/lib/utils/errors'
+import { sanitizeDisplayName } from '@/lib/utils/sanitize'
 
 export async function POST(
   request: NextRequest,
@@ -22,7 +24,11 @@ export async function POST(
     return errorResponse('ROOM_NOT_FOUND', 'Room not found', 404)
   }
 
-  if (sessionId && room.host_session_id !== sessionId) {
+  if (!sessionId) {
+    return errorResponse('NOT_IN_GAME', 'Session ID is required', 401)
+  }
+
+  if (room.host_session_id !== sessionId) {
     return errorResponse('NOT_HOST', 'Only the host can add bots', 403)
   }
 
@@ -45,7 +51,7 @@ export async function POST(
   while (usedIndices.has(playerIndex)) playerIndex++
 
   // Resolve bot name
-  let displayName = botName.trim() || 'Bot'
+  let displayName = sanitizeDisplayName(botName) || 'Bot'
   const existingNames = (players || []).map((p) => p.display_name)
   if (existingNames.includes(displayName)) {
     let counter = 2
@@ -66,8 +72,19 @@ export async function POST(
     .single()
 
   if (error) {
-    return errorResponse('INTERNAL_ERROR' as any, 'Failed to add bot', 500)
+    return errorResponse('INTERNAL_ERROR', 'Failed to add bot', 500)
   }
+
+  // Broadcast bot joined
+  await serverBroadcast(code.toUpperCase(), 'player_joined', {
+    player: {
+      id: bot.id,
+      displayName: bot.display_name,
+      playerIndex: bot.player_index,
+      isBot: true,
+      isConnected: true,
+    },
+  })
 
   return NextResponse.json({
     playerId: bot.id,

@@ -8,6 +8,11 @@ import { useGame } from '@/context/GameContext'
 export function usePresence(roomCode: string | null, sessionId: string | null) {
   const { state, dispatch } = useGame()
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const playersRef = useRef(state.players)
+  playersRef.current = state.players
+
+  const myPlayerIndex = state.myPlayerIndex
+  const mySessionId = state.mySessionId
 
   useEffect(() => {
     if (!roomCode || !sessionId) return
@@ -17,7 +22,7 @@ export function usePresence(roomCode: string | null, sessionId: string | null) {
     })
     channelRef.current = channel
 
-    const myPlayer = state.players.find((p) => p.sessionId === sessionId)
+    const myPlayer = playersRef.current.find((p) => p.sessionId === sessionId)
 
     channel
       .on('presence', { event: 'join' }, ({ newPresences }) => {
@@ -54,7 +59,7 @@ export function usePresence(roomCode: string | null, sessionId: string | null) {
       channel.unsubscribe()
       channelRef.current = null
     }
-  }, [roomCode, sessionId, state.players, dispatch])
+  }, [roomCode, sessionId, myPlayerIndex, mySessionId, dispatch])
 
   return channelRef
 }

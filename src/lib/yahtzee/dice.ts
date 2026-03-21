@@ -1,8 +1,9 @@
+import { randomInt } from 'crypto'
 import { DICE_COUNT } from './categories'
 
-/** Generate a random die value (1-6) */
+/** Generate a random die value (1-6) using cryptographic randomness */
 function rollOne(): number {
-  return Math.floor(Math.random() * 6) + 1
+  return randomInt(1, 7)
 }
 
 /** Generate a fresh set of 5 dice */

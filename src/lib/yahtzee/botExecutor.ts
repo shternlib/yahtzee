@@ -4,7 +4,7 @@ import { generateDice, rollDice } from './dice'
 import { calculateScore, calculateAvailableScores, calculateTotals, isScorecardComplete } from './scoring'
 import { chooseCategory, chooseDiceToHold, shouldReroll } from './bot'
 import { createEmptyScorecard, TOTAL_ROUNDS, type Category } from './categories'
-import { getRoomState, setRoomState } from '@/app/api/rooms/[code]/roll/route'
+import { loadRoomState, saveRoomState, createInitialState } from './gameState'
 
 interface BotTurnResult {
   playerIndex: number
@@ -52,15 +52,9 @@ export async function executeBotTurns(
 
   // Process consecutive bot turns
   while (isBot(currentPlayerIndex)) {
-    let state = getRoomState(roomId)
+    let state = await loadRoomState(supabase, roomId)
     if (!state) {
-      // Initialize state if needed
-      const scorecards: Record<number, import('./categories').ScorecardData> = {}
-      for (const p of players) {
-        scorecards[p.player_index] = createEmptyScorecard()
-      }
-      state = { dice: [0, 0, 0, 0, 0], rollCount: 0, held: [false, false, false, false, false], scorecards }
-      setRoomState(roomId, state)
+      state = createInitialState(players.map(p => p.player_index))
     }
 
     const scorecard = state.scorecards[currentPlayerIndex] || createEmptyScorecard()
@@ -71,7 +65,7 @@ export async function executeBotTurns(
     state.dice = dice
     state.rollCount = rollCount
     state.held = [false, false, false, false, false]
-    setRoomState(roomId, state)
+    await saveRoomState(supabase, roomId, state)
 
     // Broadcast first roll
     await serverBroadcast(roomCode, 'dice_roll', {
@@ -92,7 +86,7 @@ export async function executeBotTurns(
       state.dice = dice
       state.rollCount = rollCount
       state.held = held
-      setRoomState(roomId, state)
+      await saveRoomState(supabase, roomId, state)
 
       await serverBroadcast(roomCode, 'dice_roll', {
         dice,
@@ -119,10 +113,13 @@ export async function executeBotTurns(
     }
     botTurns.push(turnResult)
 
-    // Advance to next player
-    const nextPlayerIndex = (currentPlayerIndex + 1) % playerCount
+    // Advance to next player using actual player indices (handles non-contiguous indices)
+    const playerIndices = players.map(p => p.player_index).sort((a, b) => a - b)
+    const currentPos = playerIndices.indexOf(currentPlayerIndex)
+    const nextPos = (currentPos + 1) % playerIndices.length
+    const nextPlayerIndex = playerIndices[nextPos]
     let nextRound = currentRound
-    if (nextPlayerIndex <= currentPlayerIndex) {
+    if (nextPos === 0) {
       nextRound = currentRound + 1
     }
 
@@ -162,6 +159,7 @@ export async function executeBotTurns(
       await supabase.from('game_rooms').update({
         status: 'finished',
         finished_at: new Date().toISOString(),
+        game_state: null,
       }).eq('id', roomId)
 
       // Broadcast score update and game end
@@ -178,8 +176,6 @@ export async function executeBotTurns(
         scores: scores.map(s => ({ playerIndex: s.playerIndex, grandTotal: s.total })),
         winner: scores[0]?.playerIndex,
       })
-
-      setRoomState(roomId, undefined as any)
 
       return {
         botTurns,
@@ -201,17 +197,16 @@ export async function executeBotTurns(
       gameFinished: false,
     })
 
-    // Update room in DB
-    await supabase.from('game_rooms').update({
-      current_turn_player_index: nextPlayerIndex,
-      current_round: nextRound,
-    }).eq('id', roomId)
-
-    // Reset dice state for next turn
+    // Reset dice state for next turn and save atomically
     state.dice = [0, 0, 0, 0, 0]
     state.rollCount = 0
     state.held = [false, false, false, false, false]
-    setRoomState(roomId, state)
+
+    await supabase.from('game_rooms').update({
+      current_turn_player_index: nextPlayerIndex,
+      current_round: nextRound,
+      game_state: state,
+    }).eq('id', roomId)
 
     currentPlayerIndex = nextPlayerIndex
     currentRound = nextRound

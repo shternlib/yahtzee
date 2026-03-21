@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
+import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
 import { errorResponse } from '@/lib/utils/errors'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
 
@@ -24,7 +25,11 @@ export async function POST(
   }
 
   // Verify host
-  if (sessionId && room.host_session_id !== sessionId) {
+  if (!sessionId) {
+    return errorResponse('NOT_IN_GAME', 'Session ID is required', 401)
+  }
+
+  if (room.host_session_id !== sessionId) {
     return errorResponse('NOT_HOST', 'Only the host can start the game', 403)
   }
 
@@ -54,10 +59,21 @@ export async function POST(
     .eq('id', room.id)
 
   if (error) {
-    return errorResponse('INTERNAL_ERROR' as any, 'Failed to start game', 500)
+    return errorResponse('INTERNAL_ERROR', 'Failed to start game', 500)
   }
 
   const turnOrder = (players || []).map((p) => p.player_index)
+
+  // Broadcast game start to all players
+  await serverBroadcast(code.toUpperCase(), 'game_start', {
+    turnOrder,
+    firstPlayer: 0,
+    players: (players || []).map(p => ({
+      displayName: p.display_name,
+      playerIndex: p.player_index,
+      isBot: p.is_bot,
+    })),
+  })
 
   // If first player is a bot, auto-play their turn
   const firstPlayer = (players || []).find(p => p.player_index === 0)
