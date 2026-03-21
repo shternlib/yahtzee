@@ -3,6 +3,7 @@
     "title": "Yahtzee",
     "subtitle": "Multiplayer Dice Game",
     "namePlaceholder": "Your name",
+    "nameHint": "Don't use your real name",
     "createGame": "Create Game",
     "joinByCode": "Join by Code",
     "codePlaceholder": "Room code",
@@ -71,5 +72,112 @@
   "language": {
     "en": "English",
     "ru": "Russian"
+  },
+  "footer": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "parents": "For Parents"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: March 2026",
+    "backToHome": "Back to Home",
+    "dataCollected": {
+      "title": "What Data We Collect",
+      "body": "Dragon Dice collects minimal data to provide the game experience. We collect only: display names (chosen by the player), game scores, and temporary session IDs. We do not collect email addresses, real names, physical addresses, phone numbers, or any other personal information."
+    },
+    "dataUsage": {
+      "title": "How We Use Your Data",
+      "body": "All collected data is used solely for game functionality -- connecting players to game rooms, displaying scores during gameplay, and maintaining game state. We do not use any data for profiling, marketing, or any purpose beyond operating the game."
+    },
+    "dataRetention": {
+      "title": "Data Retention",
+      "body": "Game rooms and session data automatically expire and are deleted within 24 hours. Game scores may be retained for statistical purposes (such as leaderboards), but are not linked to any personally identifiable information."
+    },
+    "thirdParty": {
+      "title": "Third-Party Tracking and Advertising",
+      "body": "Dragon Dice does not currently use any third-party tracking, analytics, or advertising services. If this changes in the future, this policy will be updated and any advertising will be COPPA-compliant."
+    },
+    "children": {
+      "title": "Children's Privacy",
+      "body": "Dragon Dice is designed for players ages 8 and up. We do not knowingly collect personal information from children. The display names used in the game are player-chosen nicknames, and we encourage players not to use their real names."
+    },
+    "parentalRights": {
+      "title": "Parental Rights",
+      "body": "Parents and guardians have the right to: review any data associated with their child's gameplay, request deletion of their child's data, and restrict future data collection. To exercise any of these rights, please contact us at privacy@dragonfamily.app."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "body": "If you have questions about this privacy policy or our data practices, please contact us at privacy@dragonfamily.app."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: March 2026",
+    "backToHome": "Back to Home",
+    "acceptance": {
+      "title": "Acceptance of Terms",
+      "body": "By using Dragon Dice, you agree to these Terms of Service. If you are under 18, your parent or guardian must agree to these terms on your behalf. If you do not agree with any part of these terms, please do not use the game."
+    },
+    "gameRules": {
+      "title": "Game Rules and Fair Play",
+      "body": "Dragon Dice is a multiplayer dice game based on Yahtzee rules. Players are expected to play fairly and in good spirit. Automated play, exploiting bugs, or any form of cheating is prohibited and may result in being removed from the game."
+    },
+    "conduct": {
+      "title": "User Conduct",
+      "body": "Players must choose appropriate display names. Offensive, discriminatory, threatening, or otherwise inappropriate names are not allowed. We reserve the right to remove any player whose display name violates these guidelines."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "body": "Dragon Dice, including its design, code, graphics, and content, is the property of Dragon Family. You may not copy, modify, distribute, or create derivative works based on the game without explicit permission."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "body": "Dragon Dice is provided \"as is\" and \"as available\" without warranties of any kind, either express or implied. We do not guarantee that the game will be uninterrupted, error-free, or free of harmful components."
+    },
+    "liability": {
+      "title": "Limitation of Liability",
+      "body": "To the maximum extent permitted by law, Dragon Family shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of Dragon Dice."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "body": "We may update these Terms of Service from time to time. Continued use of Dragon Dice after changes are posted constitutes acceptance of the updated terms. We encourage you to review this page periodically."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "body": "If you have questions about these Terms of Service, please contact us at legal@dragonfamily.app."
+    }
+  },
+  "parents": {
+    "title": "For Parents",
+    "backToHome": "Back to Home",
+    "whatIs": {
+      "title": "What is Dragon Dice?",
+      "body": "Dragon Dice is a safe, family-friendly online dice game based on classic Yahtzee rules. It is designed for players ages 8 and up. Children can play with family members, friends, or practice against computer opponents in a safe environment."
+    },
+    "dataCollected": {
+      "title": "What Data Do We Collect?",
+      "body": "We collect only the bare minimum needed for the game to work: a display name (which we encourage to be a nickname, not a real name) and game scores. We do not collect email addresses, real names, birthdays, locations, photos, or any other personal information."
+    },
+    "noChat": {
+      "title": "No Chat Between Players",
+      "body": "Dragon Dice does not have any free-text chat functionality. Players cannot send messages to each other. In the future, we plan to add a limited set of pre-defined reactions (like thumbs up or smiley face) that players can use, but never free-text communication."
+    },
+    "noPurchases": {
+      "title": "No In-App Purchases",
+      "body": "Dragon Dice currently has no in-app purchases. If we add purchases in the future, they will be protected by a parental gate to prevent unauthorized transactions by children."
+    },
+    "noAds": {
+      "title": "No Advertising",
+      "body": "Dragon Dice currently does not display any advertising. If advertising is added in the future, it will be fully COPPA-compliant and will not involve behavioral targeting or tracking of children."
+    },
+    "contact": {
+      "title": "How to Contact Us",
+      "body": "If you have any questions or concerns about your child's experience with Dragon Dice, please reach out to us at privacy@dragonfamily.app. We take children's safety seriously and will respond promptly."
+    },
+    "dataDeletion": {
+      "title": "How to Request Data Deletion",
+      "body": "If you would like us to delete any data associated with your child's gameplay, please email us at privacy@dragonfamily.app with the display name used. Game room data is automatically deleted within 24 hours, but we will confirm deletion of any retained score data upon request."
+    }
   }
 }

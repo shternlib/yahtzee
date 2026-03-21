@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { GameProvider } from '@/context/GameContext'
+import { Footer } from '@/components/ui/Footer'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -32,8 +33,11 @@ export default async function LocaleLayout({
       <body className="bg-gray-900 text-white antialiased">
         <NextIntlClientProvider messages={messages}>
           <GameProvider>
-            <main className="min-h-dvh max-w-lg mx-auto">
-              {children}
+            <main className="min-h-dvh max-w-lg mx-auto flex flex-col">
+              <div className="flex-1">
+                {children}
+              </div>
+              <Footer />
             </main>
           </GameProvider>
         </NextIntlClientProvider>

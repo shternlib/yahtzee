@@ -111,6 +111,7 @@ export default function HomePage() {
           maxLength={20}
           className="w-full px-4 py-4 bg-gray-800 rounded-xl text-white placeholder-gray-500 text-lg outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <p className="text-xs text-gray-500 -mt-2 ml-1">{t('nameHint')}</p>
 
         <button
           onClick={handleCreate}
