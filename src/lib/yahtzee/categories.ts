@@ -85,5 +85,8 @@ export const SMALL_STRAIGHT_SCORE = 30
 export const LARGE_STRAIGHT_SCORE = 40
 export const YAHTZEE_SCORE = 50
 export const TOTAL_ROUNDS = 13
+/** Round counter advances to TOTAL_ROUNDS + 1 as a sentinel to trigger game-end detection.
+ *  DB constraint allows current_round BETWEEN 1 AND 14 to accommodate this. */
+export const GAME_END_ROUND = TOTAL_ROUNDS + 1
 export const DICE_COUNT = 5
 export const MAX_ROLLS = 3

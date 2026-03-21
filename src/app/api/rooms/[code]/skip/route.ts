@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
 import logger from '@/lib/utils/logger'
-import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES } from '@/lib/yahtzee/categories'
+import { GAME_END_ROUND, createEmptyScorecard, ALL_CATEGORIES } from '@/lib/yahtzee/categories'
 import { calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
 import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
@@ -96,7 +96,7 @@ export async function POST(
   }
 
   const allComplete = Object.values(state.scorecards).every(isScorecardComplete)
-  const gameFinished = allComplete || nextRound > TOTAL_ROUNDS
+  const gameFinished = allComplete || nextRound >= GAME_END_ROUND
 
   if (gameFinished) {
     for (const p of players || []) {

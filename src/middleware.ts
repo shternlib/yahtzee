@@ -44,11 +44,19 @@ function getRateLimitTier(
 }
 
 function getClientIp(request: NextRequest): string {
+  // Prefer platform-set headers (cannot be spoofed by clients on Vercel/Cloudflare)
+  const realIp = request.headers.get('x-real-ip')
+  if (realIp) return realIp
+
+  // x-forwarded-for can be spoofed without a trusted proxy — use last entry
+  // (rightmost is the one added by the closest proxy, hardest to spoof)
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) {
-    return forwarded.split(',')[0].trim()
+    const parts = forwarded.split(',').map(s => s.trim())
+    return parts[parts.length - 1]
   }
-  return request.headers.get('x-real-ip') ?? '127.0.0.1'
+
+  return '127.0.0.1'
 }
 
 function addRateLimitHeaders(

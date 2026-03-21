@@ -3,7 +3,7 @@ import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
 import { generateDice, rollDice } from './dice'
 import { calculateScore, calculateAvailableScores, calculateTotals, isScorecardComplete } from './scoring'
 import { chooseCategory, chooseDiceToHold, shouldReroll } from './bot'
-import { createEmptyScorecard, TOTAL_ROUNDS, type Category } from './categories'
+import { createEmptyScorecard, GAME_END_ROUND, type Category } from './categories'
 import { loadRoomState, saveRoomState, createInitialState } from './gameState'
 
 interface BotTurnResult {
@@ -125,7 +125,7 @@ export async function executeBotTurns(
 
     // Check if game is finished
     const allComplete = Object.values(state.scorecards).every(isScorecardComplete)
-    const gameFinished = allComplete || nextRound > TOTAL_ROUNDS
+    const gameFinished = allComplete || nextRound >= GAME_END_ROUND
 
     if (gameFinished) {
       // Save final scores to DB
