@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { serverBroadcast } from '@/lib/supabase/serverBroadcast'
 import { errorResponse } from '@/lib/utils/errors'
+import logger from '@/lib/utils/logger'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
 
 export async function POST(
@@ -79,7 +80,7 @@ export async function POST(
   const firstPlayer = (players || []).find(p => p.player_index === 0)
   if (firstPlayer?.is_bot) {
     executeBotTurns(room.id, code.toUpperCase(), 0, 1, (players || []).length)
-      .catch(err => console.error('Bot execution error:', err))
+      .catch(err => logger.error('Bot execution error', { roomCode: code, error: String(err) }))
   }
 
   return NextResponse.json({

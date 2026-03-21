@@ -6,6 +6,7 @@ import {
   type RateLimitResult,
   type RateLimitTier,
 } from './lib/utils/rate-limit'
+import logger from './lib/utils/logger'
 
 const intlMiddleware = createMiddleware(routing)
 
@@ -66,9 +67,31 @@ function addRateLimitHeaders(
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Rate limiting for API routes
-  if (pathname.startsWith('/api/rooms')) {
-    const tier = getRateLimitTier(pathname, request.method)
+  // Request logging for API routes
+  if (pathname.startsWith('/api/')) {
+    const start = Date.now()
+    const method = request.method
+
+    // Log after response is determined (use queueMicrotask to capture duration)
+    const logRequest = (status: number) => {
+      const duration = Date.now() - start
+      logger.info('API request', { method, path: pathname, status, duration })
+    }
+
+    // Wrap the response pipeline to capture status
+    const originalNext = () => {
+      const response = NextResponse.next()
+      logRequest(response.status)
+      return response
+    }
+
+    // For non-rooms API routes, log and pass through
+    if (!pathname.startsWith('/api/rooms')) {
+      return originalNext()
+    }
+
+    // Rate limiting for API routes
+    const tier = getRateLimitTier(pathname, method)
 
     if (tier) {
       const ip = getClientIp(request)
@@ -86,15 +109,17 @@ export default function middleware(request: NextRequest) {
           },
           { status: 429 }
         )
+        logRequest(429)
         return addRateLimitHeaders(response, result)
       }
 
       const response = NextResponse.next()
+      logRequest(200)
       return addRateLimitHeaders(response, result)
     }
 
-    // API route without a matching tier — pass through
-    return NextResponse.next()
+    // API route without a matching tier -- pass through
+    return originalNext()
   }
 
   // i18n middleware for page routes
@@ -102,5 +127,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(ru|en)/:path*', '/api/rooms/:path*'],
+  matcher: ['/', '/(ru|en)/:path*', '/api/:path*'],
 }

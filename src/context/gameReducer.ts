@@ -1,5 +1,6 @@
 import type { Category, ScorecardData } from '@/lib/yahtzee/categories'
 import { createEmptyScorecard } from '@/lib/yahtzee/categories'
+import type { RoomGameState } from '@/lib/yahtzee/gameState'
 
 export interface PlayerInfo {
   id: string
@@ -45,6 +46,7 @@ export type GameAction =
   | { type: 'GAME_END'; payload: { scores: { playerIndex: number; grandTotal: number }[]; winner: number } }
   | { type: 'PLAYER_CONNECTED'; payload: { playerIndex: number } }
   | { type: 'PLAYER_DISCONNECTED'; payload: { playerIndex: number } }
+  | { type: 'SYNC_STATE'; payload: { status: GameState['status']; currentTurnPlayerIndex: number; round: number; players: PlayerInfo[]; gameState: RoomGameState | null } }
 
 export const initialGameState: GameState = {
   roomCode: '',
@@ -193,6 +195,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           p.playerIndex === action.payload.playerIndex ? { ...p, isConnected: false } : p
         ),
       }
+
+    case 'SYNC_STATE': {
+      const { status, currentTurnPlayerIndex, round, players, gameState } = action.payload
+      const syncedScorecards: Record<number, ScorecardData> = {}
+      for (const p of players) {
+        syncedScorecards[p.playerIndex] =
+          gameState?.scorecards[p.playerIndex] ?? createEmptyScorecard()
+      }
+      return {
+        ...state,
+        status,
+        round,
+        players: players.map((p) => ({
+          ...p,
+          // Preserve sessionId from local state if available
+          sessionId: state.players.find((sp) => sp.playerIndex === p.playerIndex)?.sessionId,
+        })),
+        currentTurn: {
+          playerIndex: currentTurnPlayerIndex,
+          dice: gameState?.dice ?? [0, 0, 0, 0, 0],
+          held: gameState?.held ?? [false, false, false, false, false],
+          rollCount: gameState?.rollCount ?? 0,
+        },
+        scorecards: syncedScorecards,
+        availableCategories: {},
+      }
+    }
 
     default:
       return state

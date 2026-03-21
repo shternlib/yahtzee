@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { errorResponse } from '@/lib/utils/errors'
+import logger from '@/lib/utils/logger'
 import { TOTAL_ROUNDS, createEmptyScorecard, ALL_CATEGORIES } from '@/lib/yahtzee/categories'
 import { calculateTotals, isScorecardComplete } from '@/lib/yahtzee/scoring'
 import { executeBotTurns } from '@/lib/yahtzee/botExecutor'
@@ -175,7 +176,7 @@ export async function POST(
   const nextPlayer = (players || []).find(p => p.player_index === nextPlayerIndex)
   if (nextPlayer?.is_bot) {
     executeBotTurns(room.id, code.toUpperCase(), nextPlayerIndex, nextRound, playerCount)
-      .catch(err => console.error('Bot execution error:', err))
+      .catch(err => logger.error('Bot execution error', { roomCode: code, error: String(err) }))
   }
 
   return NextResponse.json({
